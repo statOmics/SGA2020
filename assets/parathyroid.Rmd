@@ -1,0 +1,160 @@
+---
+title: "Parathyroid tumor case study with LRT test."
+output:
+  BiocStyle::html_document
+---
+
+
+```{r,echo=FALSE}
+library(edgeR)
+library(gplots)
+library(pheatmap)
+library(RColorBrewer)
+library("GEOquery")
+library(tidyverse)
+```
+
+#Introduction
+
+Paired-end sequencing was performed on primary cultures from parathyroid tumors of 4 patients at 2 time points over 3 conditions (control, treatment with diarylpropionitrile (DPN) and treatment with 4-hydroxytamoxifen (OHT)). DPN is a selective estrogen receptor agonist and OHT is a selective estrogen receptor modulator. One sample (patient 4, 24 hours, control) was omitted by the paper authors due to low quality. Data, the count table and information on the experiment is available at http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE37211.
+
+#Count data and meta data
+
+```{r}
+file<-"https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE37211&format=file&file=GSE37211%5Fcount%5Ftable%2Etxt%2Egz"
+countTable<-file %>% url %>% gzcon %>% readLines %>% textConnection %>% read.table(.,sep="\t",header=TRUE)
+head(countTable)
+```
+
+## Get info on samples
+Get all info from GEO.
+get sample info via getGEO (info from samples)
+
+```{r}
+gse<-getGEO("GSE37211")
+pdata<-pData(gse[[1]])
+target<-pdata[,grep(colnames(pdata),pattern=":ch1")]
+target
+```
+
+```{r}
+colnames(target)<-sub(":ch1","",colnames(target))
+target<-apply(target,2,as.factor) %>% as.data.frame
+```
+
+
+#Data analysis
+##Count object
+
+```{r}
+dge <- DGEList(counts=countTable)
+dge$sample
+```
+
+##Design
+
+There can be an effect of agent, time interaction and agent x time interaction. We also expect blocking for patient. We can assess all effects of interest within patient.
+
+```{r}
+design <- model.matrix(~agent*time+patient,target)
+rownames(design) = colnames(dge)
+design
+```
+
+##Filtering
+```{r}
+keep <- filterByExpr(dge, design)
+ dge <- dge[keep, , keep.lib.sizes=FALSE]
+```
+
+##Normalisation
+```{r}
+dge <- calcNormFactors(dge)
+dge$samples
+```
+
+##Data exploration
+An MDS plot shows the leading fold changes (differential expression) between the 23 samples.
+```{r}
+plotMDS(dge,labels=paste(target$agent,target$time,target$patient,sep="-"),col=as.double(target$agent))
+```
+
+There is a very strong patient effect!
+
+##Parameter estimation
+
+
+```{r}
+dge <- estimateDisp(dge, design, robust=TRUE)  
+plotBCV(dge)
+fit <- glmFit(dge,design)
+```
+
+
+##Contrasts
+
+```{r}
+L <- matrix(0,ncol=ncol(design),nrow=9)
+colnames(L)<-colnames(design)
+L[1,"agentDPN"]<-1
+L[2,"agentOHT"]<-1
+L[3,]<-L[2,]-L[1,]
+L[4,grep(colnames(L),pattern="DPN")]<-1
+L[5,grep(colnames(L),pattern="OHT")]<-1
+L[6,]<-L[5,]-L[4,]
+L[7,"agentDPN:time48h"]<-1
+L[8,"agentOHT:time48h"]<-1
+L[9,]<-L[8,]-L[7,]
+rownames(L)<-c(paste("early",c("DPN-C","OHT-C","OHT-DPN")),paste("late",c("DPN-C","OHT-C","OHT-DPN")),paste("inter",c("DPN-C","OHT-C","OHT-DPN")))
+L
+```
+
+##Tests
+```{r}
+tests<-apply(L,1,function(fit,contrast) glmLRT(fit,contrast=contrast),fit=fit)
+topTagsAll<-lapply(tests,topTags,n=nrow(dge))
+dt<-lapply(tests,decideTests)
+```
+
+##Plots
+
+###P-value distributions
+
+```{r}
+for (i in 1:nrow(L))
+{
+  hist(topTagsAll[[i]]$table$PValue,main=paste("contrast",names(topTagsAll)[i]),xlab="p-value")
+}
+```
+
+The histograms show strange p-value distributions for some of the contrasts, e.g. interactions. It indicates that the null distribution seems to be too broad. 
+
+###Volcano plots
+```{r}
+for (i in 1:nrow(L))
+{
+   volcano<- ggplot(topTagsAll[[i]]$table,aes(x=logFC,y=-log10(PValue),color=FDR<0.05)) + geom_point() + scale_color_manual(values=c("black","red")) + ggtitle(paste("contrast",names(topTagsAll)[i]))
+   print(volcano)
+}
+```
+
+
+### MA-plots
+
+```{r}
+for (i in 1:nrow(L))
+{
+plotSmear(tests[[i]],de.tags=rownames(dge)[as.logical(dt[[i]])],main=paste("contrast",names(tests)[i]))
+}
+```
+
+###Heatmaps
+
+```{r}
+for (i in 1:nrow(L))
+{
+  if(sum(as.logical(dt[[i]]))>=2)
+print(pheatmap(cpm(dge,log=TRUE)[as.logical(dt[[i]]),],labels_col = paste(target$agent,target$time,target$patient,sep="-"),main=paste("contrast",names(dt)[i])))
+}
+```
+

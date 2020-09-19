@@ -1,0 +1,142 @@
+---
+title: 'Evaluate decoy quality'
+author: Lieven Clement
+output:
+  BiocStyle::html_document
+---
+---
+
+#Data Import
+##Load data
+mzid files can be load via de mzID function in the mzID package.
+Because we prefer to work with a the data in a table format we flatten the data.
+We show the first 6 rows of data.
+
+```{r}
+library(mzID)
+dataFlat <- flatten(mzID("~/Downloads/SGA2019-data/identification/pyroSwissprot.mzid"))
+head(dataFlat)
+```
+
+##Column names
+
+We will assess the names of the variables in the mzid file.
+
+```{r}
+names(dataFlat)
+```
+
+#Evaluate decoys
+We would like to assess the decoy quality for the omssa and x!tandem scores.
+The scores are e-values.
+Small e-values are better.
+For visualisation purposes we transform the e-values by taking the -log10
+
+##Omssa
+###Preprocess mzid data
+We first subset the data, because there are many missing values: PSMs without omssa score, and we remove the missing values.
+Next we -log10 transform the data.
+
+```{r}
+data <- dataFlat[,c("isdecoy","omssa:evalue")]
+names(data) <- c("decoy","score")
+data <- na.exclude(data)
+data$score <- -log10(as.double(data$score))
+```
+
+###Histogram of targets and decoys
+```{r}
+library(ggplot2)
+
+#We will use 50 breaks
+nBreaks <- 50
+binwidth <- diff(range(data$score))/nBreaks
+print(binwidth)
+      ggplot(data, aes(score, fill = decoy, col=I("black")))+ geom_histogram(alpha = 0.5, binwidth=binwidth, position = 'identity') +  labs(x = 'Score', y = 'Counts' ,title = 'Histogram of targets and decoys') +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = rel(1.5)),
+    axis.title = element_text(size = rel(1.2)),
+    axis.text = element_text(size = rel(1.2)),
+    axis.title.y = element_text(angle = 0))
+```
+
+###PPplot of targets and decoys
+
+```{r}
+library(dplyr)
+pi0 <- sum(data$decoy)/sum(!data$decoy)
+ppPlot <- ggplot()  +
+geom_abline(slope = pi0,color = 'black') +
+labs(x = 'Decoy Percentile', y = 'Target\nPercentile' ,title = 'PP plot of target PSMs') +
+xlim(0,1) + ylim(0,1) +
+theme_bw() +
+theme(
+   plot.title = element_text(size = rel(1.5)),
+   axis.title = element_text(size = rel(1.2)),
+   axis.text = element_text(size = rel(1.2)),
+   axis.title.y = element_text(angle = 0))
+
+x <- data$score[!data$decoy]
+Ft <- ecdf(x)
+Fd <- ecdf(data$score[data$decoy])
+df <- data_frame(Fdp = Fd(x), Ftp = Ft(x))
+
+ppPlot + geom_point(data = df,aes(Fdp,Ftp),color = 'dark grey')
+```
+
+
+##Xtandem
+###Preprocess mzid data
+We first subset the data, because there are many missing values: PSMs without omssa score, and we remove the missing values.
+Next we -log10 transform the data.
+
+```{r}
+data <- dataFlat[,c("isdecoy","x!tandem:expect")]
+names(data) <- c("decoy","score")
+data <- na.exclude(data)
+data$score <- -log10(as.double(data$score))
+```
+
+###Histogram of targets and decoys
+```{r}
+library(ggplot2)
+
+#We will use 50 breaks
+nBreaks <- 50
+binwidth <- diff(range(data$score))/nBreaks
+print(binwidth)
+      ggplot(data, aes(score, fill = decoy, col=I("black")))+ geom_histogram(alpha = 0.5, binwidth=binwidth, position = 'identity') +  labs(x = 'Score', y = 'Counts' ,title = 'Histogram of targets and decoys') +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = rel(1.5)),
+    axis.title = element_text(size = rel(1.2)),
+    axis.text = element_text(size = rel(1.2)),
+    axis.title.y = element_text(angle = 0))
+```
+
+###PPplot of targets and decoys
+
+```{r}
+library(dplyr)
+pi0 <- sum(data$decoy)/sum(!data$decoy)
+ppPlot <- ggplot()  +
+geom_abline(slope = pi0,color = 'black') +
+labs(x = 'Decoy Percentile', y = 'Target\nPercentile' ,title = 'PP plot of target PSMs') +
+xlim(0,1) + ylim(0,1) +
+theme_bw() +
+theme(
+   plot.title = element_text(size = rel(1.5)),
+   axis.title = element_text(size = rel(1.2)),
+   axis.text = element_text(size = rel(1.2)),
+   axis.title.y = element_text(angle = 0))
+
+x <- data$score[!data$decoy]
+Ft <- ecdf(x)
+Fd <- ecdf(data$score[data$decoy])
+df <- data_frame(Fdp = Fd(x), Ftp = Ft(x))
+
+ppPlot + geom_point(data = df,aes(Fdp,Ftp),color = 'dark grey')
+```
+
+Note, that the target decoy assumption is violated. We explained the reasons for this in the class.

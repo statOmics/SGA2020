@@ -1,0 +1,171 @@
+---
+title: "Airway: DE analysis based on transcript counts and DESeq2"
+author: "Lieven Clement"
+output:
+  BiocStyle::html_document
+---
+
+# Background
+The data used in this workflow comes from an RNA-seq experiment where airway smooth muscle cells were treated with dexamethasone, a synthetic glucocorticoid steroid with anti-inflammatory effects (Himes et al. 2014). Glucocorticoids are used, for example, by people with asthma to reduce inflammation of the airways. In the experiment, four human airway smooth muscle cell lines were treated with 1 micromolar dexamethasone for 18 hours. For each of the four cell lines, we have a treated and an untreated sample.
+For more description of the experiment see the article, PubMed entry 24926665, and for raw data see the GEO entry GSE52778.
+
+In this file we will assess DE by starting from transcript counts that we summarize at the gene level. The DE analysis is performed by DESeq2. 
+The analysis is based on the R/markdown script from Charlotte Soneson given at shortcourse in 2019: https://uclouvain-cbio.github.io/BSS2019/
+https://uclouvain-cbio.github.io/BSS2019/rnaseq_gene_summerschool_belgium_2019.html
+
+# Data
+FastQ files with a small subset of the reads can be found on https://github.com/statOmics/SGA2019/tree/data-rnaseq
+
+
+## Read Meta Data
+
+```{r}
+target<-readRDS("airwayMetaData.rds")
+```
+
+We do not have the Albuterol samples
+
+```{r}
+rownames(target)<-target$Run
+target<-target[-grep("Albuterol",target[,"treatment:ch1"]),]
+target[,grep(":ch1",colnames(target))]
+```
+
+```{r}
+target$cellLine<-as.factor(target[,grep("cell line:ch1",colnames(target))])
+target$treatment<-as.factor(target[,grep("treatment:ch1",colnames(target))])
+target$treatment<-relevel(target$treatment,"Untreated")
+```
+
+
+#Alignment-free transcript quantification
+
+Software such as *kallisto*
+[@Bray2016Near], *Salmon* [@Patro2017Salmon] and *Sailfish*
+[@Patro2014Sailfish], as well as other transcript quantification methods like
+*Cufflinks* [@Trapnell2010Cufflinks; @Trapnell2013Cufflinks2] and *RSEM*
+[@Li2011RSEM], differ from the counting methods introduced in the previous tutorials in that they
+provide quantifications (usually both as counts and as TPMs) for each
+*transcript*. These can then be summarized on the gene level by adding all
+values for transcripts from the same gene. A simple way to import results from
+these packages into R is provided by the `r Biocpkg("tximport")` and 
+`r Biocpkg("tximeta")` packages. Here, *tximport* reads the quantifications into a
+list of matrices, and *tximeta* aggregates the information into a
+*SummarizedExperiment* object, and also automatically adds additional
+annotations for the features. Both packages can return quantifications on the
+transcript level or aggregate them on the gene level. They also calculate
+average transcript lengths for each gene and each sample, which can be used as
+offsets to improve the differential expression analysis by accounting for
+differential isoform usage across samples [@Soneson2015Differential].
+aturecounts object
+
+##Salmon
+
+The code below imports the *Salmon* quantifications into R using the *tximeta*
+package. Note how the transcriptome that was used for the quantification is
+automatically recognized and used to annotate the resulting data object. In
+order for this to work, *tximeta* requires that the output folder structure from
+Salmon is retained, since it reads information from the associated log files in
+addition to the quantified abundances themselves. With the `addIds()` function,
+we can add additional annotation columns.
+
+```{r}
+suppressPackageStartupMessages({
+  library(tximeta)
+  library(DESeq2)
+  library(org.Hs.eg.db)
+  library(SummarizedExperiment)
+  library(ggplot2)
+  library(tidyverse)
+  library(pheatmap)
+})
+
+## List all quant.sf output files from Salmon
+salmonfiles <- paste0("./salmon/", target$Run, "/quant.sf")
+names(salmonfiles) <- target$Run
+stopifnot(all(file.exists(salmonfiles)))
+
+## Add a column "files" to the metadata table. This table must contain at least
+## two columns: "names" and "files"
+coldata <- cbind(target, files = salmonfiles, stringsAsFactors = FALSE)
+coldata$names<-coldata$Run
+
+## Import quantifications on the transcript level
+st <- tximeta::tximeta(coldata)
+
+## Summarize quantifications on the gene level
+sg <- tximeta::summarizeToGene(st)
+
+## Add gene symbols
+sg <- tximeta::addIds(sg, "SYMBOL", gene = TRUE)
+sg
+```
+
+Note that *Salmon* returns *estimated* counts, which are not necessarily
+integers. They may need to be rounded before they are passed to count-based
+statistical methods (e.g. *DESeq2*). 
+This is not necesary for *edgeR*.
+
+```{r}
+counts_salmon <- round(assay(sg, "counts"))
+```
+
+
+# Data Analysis
+## Setup count object in DESeq2
+
+```{r}
+ds_se <- DESeqDataSet(sg, design = ~ cellLine + treatment)
+```
+
+
+
+
+## Data exploration 
+
+First we transform the counts with a variance stabilizing transformation. 
+
+```{r}
+vsd <- DESeq2::vst(ds_se)
+```
+
+PCA plot 
+```{r}
+plotPCA(vsd, intgroup = c("cellLine","treatment"))
+plotPCA(vsd, intgroup = "cellLine")
+plotPCA(vsd, intgroup = "treatment")
+```
+
+PC1 treatment effect. PC2 cell line effect.
+
+##Main analysis
+
+### Fit model
+
+```{r}
+ds_se <- DESeq2::DESeq(ds_se)
+DESeq2::plotDispEsts(ds_se)
+```
+
+###Results
+
+```{r}
+res <- results(ds_se)
+head(res)
+```
+
+```{r}
+summary(res)
+hist(res$pvalue,xlab="p-value")
+
+volcanoEarly<- ggplot(res %>% as.data.frame,aes(x=log2FoldChange,y=-log10(pvalue),color=padj<0.05)) + geom_point() + scale_color_manual(values=c("black","red")) + ggtitle(paste("contrast","early"))
+print(volcanoEarly)
+
+plotMA(res)
+mat <- assay(vsd)[head(order(res$padj), 30), ]
+pheatmap(mat)
+```
+
+Modify the file for an edgeR analysis. 
+You can use the script of the short course as resource. 
+s

@@ -1,0 +1,35 @@
+---
+title: "Homework 2: heart example"
+author:
+- name: Name Group Member 1, Name Group Member 2, Name Group Member 3, Name Group Member 4,
+output:
+  BiocStyle::html_document
+---
+
+# Background
+Researchers have assessed the proteome in different regions of the heart for 3 patients (identifiers 3, 4, and 8). For each patient they sampled the left atrium (LA), right atrium (RA), left ventricle (LV) and the right ventricle (RV). The data are a small subset of the public dataset PXD006675 on PRIDE.
+
+Suppose that researchers are mainly interested in comparing the ventricular to the atrial proteome. Particularly, they would like to compare the left atrium to the left ventricle, the right atrium to the right ventricle, the average ventricular vs atrial proteome and if ventricular vs atrial proteome shifts differ between left and right heart region.
+
+#MSqRob Analysis
+
+#Analysis for 1 protein
+
+##Peptide summarisation
+
+### With rlm
+
+### WLS with matrix algebra (betas and sample summaries)
+
+##Differential expression
+
+### With lm (summary , contrasts)
+
+### OLS with matrix algebra (betas, var-covar betas, contrasts, standard error of contrasts, t-tests)
+
+### With rlm (summaries, contrasts)
+
+### WLS with matrix algebra (betas, var-covar betas, contrasts, standard error of contrasts, t-tests)
+
+
+

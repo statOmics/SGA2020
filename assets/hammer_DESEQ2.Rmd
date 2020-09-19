@@ -1,0 +1,173 @@
+---
+title: "Hammer Dataset with DESeq2"
+output:
+  BiocStyle::html_document
+---
+
+
+```{r,echo=FALSE}
+library(DESeq2)
+library(gplots)
+library(pheatmap)
+library(RColorBrewer)
+```
+
+#Introduction
+
+Researchers assessed the effect of spinal nerve ligation (SNL) on the transcriptome of rats. In this experiment, transcriptome profiling occurred at two weeks and two months after treatment, for both the SNL group and a control group. Two biological replicates are used for every treatment - time combination. The researchers are interested in early and late effects and in genes for which the effect changes over time. 
+
+```{r}
+file="http://bowtie-bio.sourceforge.net/recount/ExpressionSets/hammer_eset.RData"
+load(url(file))
+hammer.eset
+```
+
+```{r}
+pData(hammer.eset)
+````
+
+```{r}
+library(tidyverse)
+pData(hammer.eset)
+hammer.eset %>% exprs %>% head
+```
+
+#Design
+
+```{r}
+pData(hammer.eset)$time<-factor(rep(c("2m","2w"),each=4),levels = c("2w","2m"))
+levels(pData(hammer.eset)$protocol)<-c("c","snl")
+```
+
+#Setup DESEQ2 object
+```{r}
+ds_matrix <- DESeqDataSetFromMatrix(countData = exprs(hammer.eset), 
+colData = pData(hammer.eset),
+design = ~ time*protocol)
+```
+
+#Data exploration
+
+With DESeq2 we can first do a variance stabilizing transformation before we make a principal component plot. 
+
+```{r}
+vsd <- DESeq2::vst(ds_matrix)
+plotPCA(vsd, intgroup = c("protocol","time"))
+```
+
+#DE-analysis
+
+As we have already specified an experimental design when we created the DESeqDataSet, we can run the differential expression pipeline on the raw counts with a single call to the function DESeq. We can also plot the estimated dispersions.
+
+```{r}
+ds_matrix <- DESeq(ds_matrix)
+plotDispEsts(ds_matrix)
+```
+
+##Tests
+
+The researchers are interested in an effect of the treatment at the early time point, the late timepoint and the treatment $\times$ time interaction. 
+
+The following model is used at the gene-level to model the read count for gene $g$ of mouse $i$. 
+
+$$
+\left\{
+\begin{array}{lcl}
+y_{ig} &\sim& NB(\mu_{ig},\phi_g)\\
+E[y_{ig}\vert \mathbf{x}_{ig}]&=&\mu_{ig}\\
+log(\mu_{ig})&=&\eta_{ig}\\
+\eta_{ig}&=&\beta_0 + \beta_{snl} x_{snl,i} + \beta_{t2m}x_{t2m,i} + \beta_\text{snl,t2m} x_{snl,i}x_{t2m,i} + \log N_i
+\end{array}\right.
+$$
+
+with $x_{snl,i}$ a dummy variable that is 1 if a mouse had the spinal nerve ligation and is 0 otherwise, $x_{t2m,i}$ a dummy variable that 1 one if the mouse was sacrificed after 2 months and 0 otherwise and $\log{N}_i$ a normalisation offset to correct for sequencing depth. Note, that $\beta_{snl}$ is the main effect for spinal nerve ligation, and corresponds to the average log fold change between treated and control mice after two weeks. The interaction  $\beta_\text{snl,t2m}$ can be interpreted as the average change in log FC between treated and control mouse at the late and early timepoint. The researchers are also interested in a third contrast: the effect of the treatment at the late time point.
+
+$$ \log \text{FC}^\text{2 months}_\text{snl-c}= \beta_{snl}+\beta_{snl,t2m}$$
+
+Below we implement the contrasts related to each of these research questions. Is the gene DE at the early, the late timepoint and does the average log FC due to the treatment change over time?
+
+
+```{r}
+L <- matrix(0,nrow=3,ncol=length(resultsNames(ds_matrix)))
+colnames(L)<-resultsNames(ds_matrix)
+rownames(L)<-c("early","late","interaction")
+L[1,3]<-1
+L[2,3:4]<-1
+L[3,4]<-1
+L
+
+results<-apply(L,1,function(fit,contrast) results(fit, contrast=contrast),fit=ds_matrix)
+head(results$early)
+```
+
+The first column, baseMean, is a just the average of the normalized count values, dividing by size factors, taken over all samples in the DESeqDataSet. The remaining four columns refer to a specific contrast.
+
+The column log2FoldChange is the effect size estimate. This value is reported on a logarithmic scale to base 2: for example, a log2 fold change of 1.5 means that the gene???s expression is increased by a multiplicative factor of \(2^{1.5} \approx 2.82\).
+
+Of course, this estimate has an uncertainty associated with it, which is available in the column lfcSE, the standard error estimate for the log2 fold change estimate. Results of a hypothesis test for the contrast is also provided and is reported as a p value, and it is found in the column pvalue. 
+
+DESeq2 uses the Benjamini-Hochberg (BH) False Discovery Rate adjustment (Benjamini and Hochberg 1995) as implemented in the base R p.adjust function to correct for multiple testing. These values, called the BH-adjusted p values, are given in the column padj of the res object from DESeq2.
+
+Sometimes a subset of the p values in results will be NA ("not available""). This is DESeq2'ss way of reporting that all counts for this gene were zero, and hence no test was applied. In addition, p values can be assigned NA if the gene was excluded from analysis because it contained an extreme count outlier. For more information, see the outlier detection section of the DESeq2 vignette.
+
+Note, that if you want to test one specific parameter you can also provide the name of the parameter. E.g. "resultsNames(ds_matrix)[3]" is `r resultsNames(ds_matrix)[3]` the main effect for SNL vs C i.e. the log2FC at the early timepoint.
+By default the results function assesses the null hypothesis that parameter associated with the last column of the design matrix equals 0 using a Wald test.
+Here, this is the treatment x time interaction.
+
+```{r}
+head(results(ds_matrix))
+head(results(ds_matrix,name=resultsNames(ds_matrix)[3]))
+```
+
+
+
+##Evaluate Results
+### Results early
+```{r}
+summary(results$early)
+hist(results$early$pvalue,xlab="p-value")
+
+volcanoEarly<- ggplot(results$early %>% as.data.frame,aes(x=log2FoldChange,y=-log10(pvalue),color=padj<0.05)) + geom_point() + scale_color_manual(values=c("black","red")) + ggtitle(paste("contrast","early"))
+print(volcanoEarly)
+
+plotMA(results$early)
+mat <- assay(vsd)[head(order(results$early$padj), 30), ]
+pheatmap(mat)
+```
+
+
+### Results late
+```{r}
+summary(results$late)
+hist(results$late$pvalue,xlab="p-value")
+
+volcanoLate<- ggplot(results$late %>% as.data.frame,aes(x=log2FoldChange,y=-log10(pvalue),color=padj<0.05)) + geom_point() + scale_color_manual(values=c("black","red")) + ggtitle(paste("contrast","late"))
+print(volcanoLate)
+
+plotMA(results$late)
+mat <- assay(vsd)[head(order(results$late$padj), 30), ]
+pheatmap(mat)
+```
+
+### Results interaction
+
+```{r}
+summary(results$interaction)
+hist(results$interaction$pvalue,xlab="p-value")
+
+volcanoInter<- ggplot(results$interaction %>% as.data.frame,aes(x=log2FoldChange,y=-log10(pvalue),color=padj<0.05)) + geom_point() + scale_color_manual(values=c("black","red")) + ggtitle(paste("contrast","interaction"))
+print(volcanoInter)
+   
+plotMA(results$interaction)
+mat <- assay(vsd)[head(order(results$interaction$padj), sum(results$interaction$padj<0.05,na.rm=TRUE)), ]
+pheatmap(mat)
+```
+
+### Plot count data of individual genes
+
+DESeq2 allows a straightforward way of plotting the raw or normalised counts for a gene. 
+
+```{r}
+plotCounts(ds_matrix, gene = "ENSRNOG00000002419", intgroup = c("protocol","time"), 
+normalized = TRUE, transform = FALSE)
+```

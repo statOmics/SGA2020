@@ -1,0 +1,203 @@
+---
+title: "Hammer Dataset with Quasi likelihood"
+output:
+  BiocStyle::html_document
+---
+
+
+```{r,echo=FALSE}
+library(edgeR)
+library(gplots)
+library(pheatmap)
+library(RColorBrewer)
+```
+
+#Introduction
+
+Researchers assessed the effect of spinal nerve ligation (SNL) on the transcriptome of rats. In this experiment, transcriptome profiling occurred at two weeks and two months after treatment, for both the SNL group and a control group. Two biological replicates are used for every treatment - time combination. The researchers are interested in early and late effects and in genes for which the effect changes over time. 
+
+```{r}
+file="http://bowtie-bio.sourceforge.net/recount/ExpressionSets/hammer_eset.RData"
+load(url(file))
+hammer.eset
+```
+
+```{r}
+pData(hammer.eset)
+````
+
+```{r}
+library(tidyverse)
+pData(hammer.eset)
+hammer.eset %>% exprs %>% head
+```
+
+#Design
+
+
+
+The researchers are interested in an effect of the treatment at the early time point, the late timepoint and the treatment $\times$ time interaction. 
+
+The following model is used at the gene-level to model the read count $y_{ig}$ for gene $g$ of mouse $i$.
+
+For quasi-likelihood we do not specify the full distribution, only the first two moments. 
+
+$$
+\left\{
+\begin{array}{lcl}
+E[y_{ig}\vert \mathbf{x}_{ig}]&=&\mu_{ig}\\
+log(\mu_{ig})&=&\eta_{ig}\\
+\eta_{ig}&=&\beta_0 + \beta_{snl} x_{snl,i} + \beta_{t2m}x_{t2m,i} + \beta_\text{snl,t2m} x_{snl,i}x_{t2m,i} + \log N_i\\
+\text{Var}[y_{ig}\vert \mathbf{x}_{ig}]&=&\sigma^2_g\left(\mu_{ig}+\phi\mu_{ig}^2\right)
+\end{array}\right.
+$$
+
+with $x_{snl,i}$ a dummy variable that is 1 if a mouse had the spinal nerve ligation and is 0 otherwise, $x_{t2m,i}$ a dummy variable that equals 1 if the mouse was sacrificed after 2 months and 0 otherwise, and, $\log{N}_i$ a normalisation offset to correct for sequencing depth. Note, that $\beta_{snl}$ is the main effect for spinal nerve ligation, and corresponds to the average log fold change between treated and control mice after two weeks. The interaction  $\beta_\text{snl,t2m}$ can be interpreted as the average change in log FC between treated and control mouse at the late and early timepoint. The researchers are also interested in a assessing third contrast: the effect of the treatment at the late time point.
+
+$$ \log \text{FC}^\text{2 months}_\text{snl-c}= \beta_{snl}+\beta_{snl,t2m}$$
+
+The design matrix is constructed for the linear predictor. 
+
+```{r}
+pData(hammer.eset)$time<-factor(rep(c("2m","2w"),each=4),levels = c("2w","2m"))
+levels(pData(hammer.eset)$protocol)<-c("c","snl")
+```
+
+```{r}
+dge <- DGEList(counts=exprs(hammer.eset))
+dge$sample
+```
+
+```{r}
+design <- model.matrix(~time*protocol,pData(hammer.eset))
+rownames(design) = colnames(dge)
+design
+```
+
+Filtering
+```{r}
+keep <- filterByExpr(dge, design)
+ dge <- dge[keep, , keep.lib.sizes=FALSE]
+```
+
+```{r}
+dge <- calcNormFactors(dge)
+dge$samples
+```
+
+#Data exploration
+
+An MDS plot shows the leading log fold changes between the 8 samples. There is a large effect according to the SNL. Are there issues with the design? 
+
+```{r}
+plotMDS(dge,labels=paste(hammer.eset$protocol,hammer.eset$time,sep="-"),col=as.double(hammer.eset$protocol))
+```
+
+#Analysis
+
+By replacing the glmFit function by the glmQLFit function we can perform inference with quasi likelihood. 
+We will also replace the glmLRT function by the glmQLFTest function. Note, that to estimate the additional dispersion parameter $\sigma^2_g$ we can correct for the degrees of freedom that are used to estimate the mean model parameters. This will enable us to correct for the degrees of freedom in the inference. Indeed, the glmQLFit test uses an F-distribution instead of the asymptotic $\chi^2$-distribution. 
+
+```{r}
+dge <- estimateDisp(dge, design, robust=TRUE)  
+plotBCV(dge)
+fit <- glmQLFit(dge,design)
+```
+
+##Omnibus hypothesis
+
+$$H_0: \log_2 FC_{snl-c}^{early}=0 \& \log_2 FC_{snl-c}^{late}=0 \& \log_2 FC_{snl-c}^{late} - \log_2 FC_{snl-c}^{early}=0$$
+
+Define all contrasts and test them all simultaneously. 
+Note, that glmLRT and glmQLFTest can do this but assume that the contrasts are in the columns. 
+
+```{r}
+L<- matrix(0,nrow=3,ncol=4)
+colnames(L)<-colnames(design)
+rownames(L)<-c("early","late","inter")
+L[1,3]<-1
+L[2,3:4]<-1
+L[3,4]<-1
+L
+omnibus<-glmQLFTest(fit,contrast=t(L))
+sigTests <- summary(dtOmnibus<-decideTests(omnibus))
+sigTests
+alphaS1 <- (0.05 / sum(sigTests)) * (sigTests[2])  
+alphaS1
+```
+
+##Posthoc Analysis
+
+We assess each contrast.
+
+```{r}
+posthoc<-apply(L,1,function(fit,contrast) glmQLFTest(fit,contrast=contrast), fit=fit)
+```
+
+##Stagewise FDR correction
+
+We correct p-values of omnibus test and posthoc tests using stagewise testing.
+
+```{r}
+library(stageR)
+pConfirmation<-sapply(posthoc,function(x) x$table$PValue)
+rownames(pConfirmation)<-rownames(posthoc$early$table)
+head(pConfirmation)
+```
+
+```{r}
+pScreen <- omnibus$table$PValue
+names(pScreen) <-rownames(omnibus)
+stageRObj <- stageR(pScreen=pScreen,pConfirmation=pConfirmation, pScreenAdjusted=FALSE)
+stageRObj <- stageWiseAdjustment(object=stageRObj, method="holm", alpha=0.05)
+stageWiseRes <- getAdjustedPValues(stageRObj,onlySignificantGenes = TRUE,order = TRUE)
+colSums(stageWiseRes<0.05)
+```
+
+Number of significant genes in omnibus test?
+
+```{r}
+sum(stageWiseRes[,1]<0.05)
+nrow(stageWiseRes)
+```
+
+Significant genes in second stage
+
+```{r}
+sum(rowSums(stageWiseRes[,-1]<0.05)>0)
+```
+
+
+
+### early 
+
+```{r}
+sigEarly<-rownames(dge)%in%rownames(stageWiseRes)[stageWiseRes[,"early"]<0.05]
+volcano<- ggplot(posthoc$early$table,aes(x=logFC,y=-log10(PValue),color=sigEarly)) + geom_point() + scale_color_manual(values=c("black","red"))
+volcano
+plotSmear(posthoc$early,de.tags=rownames(dge)[sigEarly])
+earlyGenesOrdered<-rownames(stageWiseRes)[stageWiseRes[,"early"]<0.05]
+pheatmap(cpm(dge,log=TRUE)[earlyGenesOrdered[1:30],],labels_col = paste(hammer.eset$protocol,hammer.eset$time,sep="-"))
+```
+
+###late
+```{r}
+sigLate<-rownames(dge)%in%rownames(stageWiseRes)[stageWiseRes[,"late"]<0.05]
+volcanoLate<- ggplot(posthoc$late$table,aes(x=logFC,y=-log10(PValue),color=sigLate)) + geom_point() + scale_color_manual(values=c("black","red"))
+volcanoLate
+plotSmear(posthoc$late,de.tags=rownames(dge)[sigLate])
+lateGenesOrdered<-rownames(stageWiseRes)[stageWiseRes[,"late"]<0.05]
+pheatmap(cpm(dge,log=TRUE)[lateGenesOrdered[1:30],],labels_col = paste(hammer.eset$protocol,hammer.eset$time,sep="-"))
+```
+
+
+###Inter
+```{r}
+sigInter<-rownames(dge)%in%rownames(stageWiseRes)[stageWiseRes[,"inter"]<0.05]
+volcanoInter<- ggplot(posthoc$inter$table,aes(x=logFC,y=-log10(PValue),color=sigInter)) + geom_point() + scale_color_manual(values=c("black","red"))
+volcanoInter
+plotSmear(posthoc$inter,de.tags=rownames(dge)[sigInter])
+
+interGenesOrdered<-rownames(stageWiseRes)[stageWiseRes[,"inter"]<0.05]
+pheatmap(cpm(dge,log=TRUE)[interGenesOrdered[1:30],],labels_col = paste(hammer.eset$protocol,hammer.eset$time,sep="-"))
+```

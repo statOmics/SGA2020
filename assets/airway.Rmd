@@ -1,0 +1,131 @@
+---
+title: "Airway: DE analysis"
+author: "Lieven Clement"
+output:
+  BiocStyle::html_document
+---
+
+# Background
+The data used in this workflow comes from an RNA-seq experiment where airway smooth muscle cells were treated with dexamethasone, a synthetic glucocorticoid steroid with anti-inflammatory effects (Himes et al. 2014). Glucocorticoids are used, for example, by people with asthma to reduce inflammation of the airways. In the experiment, four human airway smooth muscle cell lines were treated with 1 micromolar dexamethasone for 18 hours. For each of the four cell lines, we have a treated and an untreated sample.
+For more description of the experiment see the article, PubMed entry 24926665, and for raw data see the GEO entry GSE52778.
+
+Many parts of this tutorial are based on parts of a published RNA-seq workflow
+available via Love et al. 2015 [F1000Research](http://f1000research.com/articles/4-1070) and as a [Bioconductor
+package](https://www.bioconductor.org/packages/release/workflows/html/rnaseqGene.html) and on Charlotte Soneson's material from the [bss2019](https://uclouvain-cbio.github.io/BSS2019/rnaseq_gene_summerschool_belgium_2019.html) workshop.
+
+# Data
+FastQ files with a small subset of the reads can be found on https://github.com/statOmics/SGA2019/tree/data-rnaseq
+Here, we will not use our count table because it is based on a small subset of the reads. 
+We will use the count table that was provided after mapping all the reads with the read mapper star. 
+
+
+```{r}
+library(edgeR)
+```
+
+#Read featurecounts object
+
+We import the featurecounts object that we have stored. 
+
+```{r}
+fc <- readRDS("featureCounts/star_featurecounts.rds")
+colnames(fc$counts)
+```
+
+## Read Meta Data
+
+```{r}
+target<-readRDS("airwayMetaData.rds")
+```
+
+# Data Analysis
+## Setup count object edgeR
+
+```{r}
+dge<-DGEList(fc$counts)
+colnames(dge)==target$Run
+target$Run%in%colnames(dge)
+```
+
+```{r}
+rownames(target)<-target$Run
+target<-target[colnames(dge),]
+target[,grep(":ch1",colnames(target))]
+```
+
+```{r}
+target$cellLine<-as.factor(target[,grep("cell line:ch1",colnames(target))])
+target$treatment<-as.factor(target[,grep("treatment:ch1",colnames(target))])
+target$treatment<-relevel(target$treatment,"Untreated")
+```
+
+
+```{r}
+colnames(dge)<-paste0(substr(target$cellLine,1,3),"_",substr(target$treatment,1,3))
+```
+
+## Filtering and normalisation
+
+```{r}
+design<-model.matrix(~treatment+cellLine,data=target)
+keep <- filterByExpr(dge, design)
+dge <- dge[keep, ,keep.lib.sizes=FALSE]
+dge<-calcNormFactors(dge)
+```
+
+
+
+
+## Data exploration 
+
+One way to reduce dimensionality is the use of multidimensional scaling (MDS). For MDS, we first have to calculate all pairwise distances between our objects (samples in this case), and then create a (typically) two-dimensional representation where these pre-calculated distances are represented as accurately as possible. This means that depending on how the pairwise sample distances are defined, the two-dimensional plot can be very different, and it is important to choose a distance that is suitable for the type of data at hand.
+
+edgeR contains a function plotMDS, which operates on a DGEList object and generates a two-dimensional MDS representation of the samples. The default distance between two samples can be interpreted as the "typical" log fold change between the two samples, for the genes that are most different between them (by default, the top 500 genes, but this can be modified). We generate an MDS plot from the DGEList object dge, coloring by the treatment and using different plot symbols for different cell lines.
+
+```{r}
+plotMDS(dge, top = 500,col=as.double(target$cellType))
+```
+
+
+
+
+## Differential analysis
+
+### Model
+
+We first estimate the overdispersion. 
+
+```{r}
+dge <- estimateDisp(dge, design)
+plotBCV(dge)
+```
+
+
+Finally, we fit the generalized linear model and perform the test. In the glmLRT function, we indicate which coefficient (which column in the design matrix) that we would like to test for. It is possible to test more general contrasts as well, and the user guide contains many examples on how to do this. The topTags function extracts the top-ranked genes. You can indicate the adjusted p-value cutoff, and/or the number of genes to keep.
+
+```{r}
+fit <- glmFit(dge, design)
+lrt <- glmLRT(fit, coef = "treatmentDexamethasone")
+ttAll <-topTags(lrt, n = nrow(dge)) # all genes
+hist(ttAll$table$PValue)
+tt <- topTags(lrt, n = nrow(dge), p.value = 0.05) # genes with adj.p<0.05
+tt
+```
+
+### Plots
+
+We first make a volcanoplot and an MA plot.
+
+```{r}
+library(ggplot2)
+volcano<- ggplot(ttAll$table,aes(x=logFC,y=-log10(PValue),color=FDR<0.05)) + geom_point() + scale_color_manual(values=c("black","red"))
+volcano
+plotSmear(lrt, de.tags = row.names(tt$table))
+```
+
+Another way of representing the results of a differential expression analysis is to construct a heatmap of the top differentially expressed genes. Here, we would expect the contrasted sample groups to cluster separately. A heatmap is a "color coded expression matrix", where the rows and columns are clustered using hierarchical clustering. Typically, it should not be applied to counts, but works better with transformed values. Here we show how it can be applied to the variance-stabilized values generated above. We choose the top 30 differentially expressed genes. There are many functions in R that can generate heatmaps, here we show the one from the pheatmap package.
+
+```{r}
+library(pheatmap)
+pheatmap(cpm(dge,log=TRUE)[rownames(tt$table)[1:30],])
+```

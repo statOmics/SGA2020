@@ -1,0 +1,312 @@
+---
+title: "Poisson IRWLS"
+author: "Lieven Clement"
+output:
+  BiocStyle::html_document
+---
+
+# Poisson model family
+## Structure of glm
+$$\left\{\begin{array}{lcr}
+y_i &\sim& Poisson(\mu_i)\\
+E[y_i]&=&\mu_i\\
+\log(\mu_i)&=&\eta_i\\
+\eta_i&=&\mathbf{x}_i\mathbf{\beta}
+\end{array}\right.$$
+
+## Poisson distribution
+$$y_i \sim \frac{\mu_i^{y_i}e^{-\mu_i}}{y_i!}$$
+
+### In the form of the exponential family
+
+$$y_i \sim \exp\left\{ \frac{y_i\theta_i- b(\theta_i)}{a(\phi)}+c(y_i,\phi)\right\}$$
+$$y_i \sim \exp\left\{y_i\log(\mu_i) - \mu_i - \log(y_i!)\right\}$$
+
+- Canonical model parameter $\theta_i=\log{\mu_i}$.
+- $b(\theta_i) = \exp(\theta_i)$
+- $c(y_i,\phi) = - \log(y_i!)$
+- $\phi = 1$
+- $a(\phi)= 1$
+- $\mu_i =\frac{\partial b(\theta_i)}{\partial \theta_i}=  \frac{\partial \exp(\theta_i)}{\partial \theta_i}=\exp(\theta_i)$
+- $\text{Var}\left[y_i \right]= a(\phi)\frac{\partial^2 b(\theta_i)}{(\partial \theta_i)^2}=  \frac{\partial^2 \exp(\theta_i)}{\partial \theta_i^2}=\exp(\theta_i)$.
+- Mean is equal to variance for Poisson!
+
+
+## Poisson Log likelihood
+For one observation: 
+$$l(\mu_i \vert y_i) = y_i \log \mu_i - \mu_i - \log y_i!$$ 
+$$l(\mu_i \vert y_i) = y_i \theta_i - e^{\theta_i} - \log y_i!$$ 
+
+- Note that $\theta_i = \eta_i$. The canonical parameter for the poisson equals the linear predictor!
+  $$\theta_i=\eta_i=\mathbf{x}_i^t\mathbf{\beta}$$
+
+Log-likelihood for all observations, given that they are independent:
+$$l(\mathbf{\mu} \vert \mathbf{y}) = \sum\limits_{i=1}^n \left\{ y_i \theta_i - e^{\theta_i} - \log y_i!\right\}$$ 
+
+## Poisson parameter estimation
+
+Maximum likelihood: choose the parameters $\mathbf{\beta}$ so that the likelihood to observe the sample under the statistical model becomes maximum. 
+$$\text{argmax}_{\mathbf{\beta}} l(\mathbf{\mu} \vert \mathbf{y})$$ 
+
+Maximization $\rightarrow$ set first derivative of likelihood to betas equal to zero. First derivative of likelihood is also called the Score function ($S(\mathbf{\theta})$):
+
+$$S(\mathbf{\theta})=\frac{\partial l(\mathbf{\mu} \vert \mathbf{y})}{\partial \beta}=0$$
+
+\begin{eqnarray*}
+S(\mathbf{\beta})&=&\frac{\partial  \sum\limits_{i=1}^n \left\{ \frac{y_i \theta_i - b(\theta_i)}{a(\phi)}+c(y_i,\phi)\right\}}{\partial \beta}\\
+&=&\sum\limits_{i=1}^n\frac{\partial  \left\{ \frac{y_i \theta_i - b(\theta_i)}{a(\phi)}+c(y_i,\phi)\right\}}{\partial \theta}\frac{\partial \theta}{\partial\mu}\frac{\partial\mu}{\partial\eta}\frac{\partial\eta}{\partial\beta}\\
+&=&\sum\limits_{i=1}^n\frac{y_i-\mu_i}{a(\phi)}\frac{1}{b^{\prime\prime}(\theta)}\frac{\partial\mu}{\partial\eta}\mathbf{x}^t\\
+&=&\mathbf{X}^T\mathbf{A}\left(\mathbf{y}-\boldsymbol{\mu}\right)
+\end{eqnarray*}
+
+For poisson data: $a(\phi)b^{\prime\prime}(\theta)=\mu$ and $\frac{\partial \mu}{\partial \eta}=\mu$. So $\mathbf{A}=\mathbf{I}$ and
+
+$$ S(\beta)=\mathbf{X}^T \left\{\mathbf{Y}-\mathbf{\mu}\right\}$$
+
+Parameter estimator $\hat{\mathbf{\beta}}$: Find  $\hat{\mathbf{\beta}}$ so that 
+$$ S(\beta) = \mathbf{0}$$
+
+Problem $\mathbf{\mu}=  b^\prime(\theta)$. 
+For Poisson this becomes $\mathbf{\mu}=  \exp(\mathbf{\theta}) = \exp(\mathbf{\eta}) = \exp(\mathbf{X\beta})$!
+Score equation is nonlinear in the model parameters!
+$\rightarrow$ Find roots of score equation by using Newton-Raphson method.
+
+### Newton-Raphson
+
+1. Choose initial parameter estimate $\mathbf{\beta}^k=\mathbf{\beta}^0$
+2. Calculate score $S(\mathbf{\beta})\vert_{\mathbf{\beta}=\mathbf{\beta}^k}$
+3. Calculate derivative of the function for which you want to calculate the roots
+4. Walk along first derivative until line (plane) of the derivative crosses zero
+5. Update the betas $\mathbf{\beta}^{k+1}$
+6. Iterate from step 2 - 5 until convergence.
+
+#### Derivative of score equation
+We have to implement an interative algorithm for optimisation. To make things tractable we will act as if $\mathbf{A}$ is known and fix it using the current values of $\boldsymbol{\beta}^k$. Note, that for Poisson regression $\mathbf{A}$ is constant and equals the identity matrix. 
+
+\begin{eqnarray*}
+\frac{\partial S(\mathbf{\beta})}{\partial \mathbf{\beta}} &=& \frac{ \mathbf{X}^T\mathbf{A} \left\{\mathbf{Y}-\boldsymbol{\mu}\right\}}{\partial \mathbf{\beta}}\\
+&=& - \mathbf{X}^T \mathbf{A}\left[
+\begin{array}{cccc} \frac{\partial \mu_1}{\partial \eta_1} &0&\ldots&0\\
+ 0&\frac{\partial \mu_2}{\partial eta_2} &\ldots&0\\
+\vdots&\vdots&\vdots&\vdots\\
+0&0&\ldots& \frac{\partial \mu_n}{\partial \eta_n}\\
+\end{array}\right] \frac{\partial \mathbf{\eta}}{\partial \mathbf{\beta}}\\
+&=&-\mathbf{X}^T\mathbf{WX}
+\end{eqnarray*}
+
+#### Define line (plane) of derivative
+- We know two points of the plane $(\mathbf{\beta}^k,S(\mathbf{\beta}^k))$ and $(\mathbf{\beta}^{k+1},0)$
+- We know the direction of the plane $S^\prime(\mathbf{\beta})=\frac{\partial S(\mathbf{\beta})}{\partial \mathbf{\beta}}$
+- Equation of plane:
+$$S(\mathbf{\beta})=\mathbf{\alpha}_0+S^\prime\vert_{\mathbf{\beta}^k} \mathbf{\beta}$$
+
+- Get $\mathbf{\beta}_{k+1}$
+\begin{eqnarray*}
+\mathbf{0}&=&\mathbf{\alpha}_0+S^\prime\vert_{\mathbf{\beta}^{k}} \mathbf{\beta}^{k+1}\\
+\mathbf{\beta}^{k+1}&=&-\left(S^{\prime}\vert_{\mathbf{\beta}^{k}}\right)^{-1}\mathbf{\alpha}_0\\
+\end{eqnarray*}
+
+- Get $\mathbf{\alpha}_0$
+\begin{eqnarray*}
+S(\mathbf{\beta}^k)&=&\mathbf{\alpha}_0+S^\prime\vert_{\mathbf{\beta}^k} \mathbf{\beta}^k\\
+\mathbf{\alpha}_0&=&-S^\prime\vert_{\mathbf{\beta}^k} \mathbf{\beta}^k + S(\mathbf{\beta}^k)\\
+\end{eqnarray*}
+
+- Get $\mathbf{\beta}_{k+1}$
+  
+\begin{eqnarray*}
+\mathbf{\beta}^{k+1}&=&\mathbf{\beta}^k-\left(S^{\prime}\vert_{\mathbf{\beta}^{k}}\right)^{-1}S(\mathbf{\beta}^k)\\
+\mathbf{\beta}^{k+1}&=&\mathbf{\beta}^k+ \left(\mathbf{X}^T\mathbf{WX}\right)^{-1} S(\mathbf{\beta}^k)
+\end{eqnarray*}
+
+With $J(\mathbf{\beta})=I(\mathbf{\beta})=\mathbf{X}^T\mathbf{WX}$  the Fisher information matrix. 
+Because we use the canonical model parameters the observed  Fisher information matrix equals the expected  Fisher information matrix $J(\mathbf{\beta})=I(\mathbf{\beta})$.
+Indeed, the observed Fisher information matrix is not depending on the observations, but only on the design and the variance of the data (via the weights). 
+Hence, Newton-Raphson is equivalent to Fisher scoring when the canonical link function is used. 
+
+Note, that the Fisher matrix, - second derivative (or hessian) of the likelihood to the model parameters, is also the inverse of the variance covariance matrix of the model parameters. It is thus related to the precision.
+
+#### Iteratively Reweighted Least Squares (IRLS). 
+
+We can rewrite Newton Raphson or Fisher scoring as IRLS.
+
+\begin{eqnarray*}
+\mathbf{\beta}^{k+1}&=&\mathbf{\beta}^k+ \left(\mathbf{X}^T\mathbf{WX}\right)^{-1} S(\mathbf{\beta}^k)\\
+\mathbf{\beta}^{k+1}&=&\mathbf{\beta}^k+ \left(\mathbf{X}^T\mathbf{WX}\right)^{-1} \mathbf{X}^T\mathbf{A} \left(\mathbf{Y}-\mathbf{\mu}\right)\\
+\mathbf{\beta}^{k+1}&=& \left(\mathbf{X}^T\mathbf{WX}\right)^{-1}\mathbf{X}^T\mathbf{WX}\mathbf{\beta}^k+ \left(\mathbf{X}^T\mathbf{WX}\right)^{-1} \mathbf{X}^T \mathbf{W}\frac{\partial \eta}{\partial \mu}  \left(\mathbf{Y}-\mathbf{\mu}\right)\\
+\mathbf{\beta}^{k+1}&=& \left(\mathbf{X}^T\mathbf{WX}\right)^{-1}\mathbf{X}^T\mathbf{W} \left[\mathbf{X}\mathbf{\beta}^k + \frac{\partial \eta}{\partial \mu}  \left(\mathbf{Y}-\mathbf{\mu}\right)
+\right]\\
+\mathbf{\beta}^{k+1}&=& \left(\mathbf{X}^T\mathbf{WX}\right)^{-1}\mathbf{X}^T\mathbf{Wz}
+\end{eqnarray*}
+
+with $\mathbf{z}=\left[\mathbf{X}\mathbf{\beta}^k + \frac{\partial \eta}{\partial \mu}  \left(\mathbf{Y}-\mathbf{\mu}\right)\right]$
+
+So we can fit the model by performing iterative regressions of the pseudo data $\mathbf{z}$ on $\mathbf{X}$. 
+In each iteration we will update $\mathbf{z}$, the weights $\mathbf{W}$ and the model parameters. 
+
+For Poisson data $\frac{\partial \eta}{\partial \mu}=\frac{\partial\log \mu}{\partial\mu}=\frac{1}{\mu}=\exp(-\eta)$ and $\mathbf{W}=\mathbf{A}\frac{\partial{\mu}}{{\partial \eta}}$ is a diagonal matrix with $[\frac{\partial{\mu_i}}{{\partial \eta_i}}]_{ii}=[\mu_i]_{ii}=[\exp(\eta_i)]_{ii}$ on its diagonal elements. 
+
+
+###Variance-covariance matrix of the model parameters? 
+In the IRWLS algorithm, the data is weighted according to the variance of $\mathbf{Y}$. We correct for the fact that the data are heteroscedastic. 
+Count data have a mean variance relation (e.g. in Poisson case $\text{E}\left[Y \right]=\text{var}\left[Y \right]=\mu$).
+The IRWLS also corrects for the scale parameter $\phi$ in $\mathbf{W}$. (Note that the scale parameter for Poisson is $\phi=1$). 
+
+So IRWLS the variance-covariance matrix for the model parameter equals 
+$$\mathbf{\Sigma}_{\hat\beta}=\left(\mathbf{X}^T\mathbf{WX}\right)^{-1}.$$
+
+Note, that the Fisher Information Matrix equals the inverse of the variance-covariance matrix of the experiment. 
+The larger the Fisher Information Matrix the more information we have on the experiment to estimate the model parameters.
+FIM $\uparrow$, precision $\uparrow$, $\text{SE}\downarrow$
+
+# Simulate poisson data
+
+- We simulate data for 100 observations. 
+- Covariates x are simulated from normal distribution
+- The $\beta$ are chosen at $\beta_0=2$, $\beta_1=0.8$, $\beta_2=1.2$
+
+```{r}
+set.seed(300)
+xhlp<-cbind(1,rnorm(100),rnorm(100))
+betasTrue<-c(2,0.8,1.2)
+etaTrue<-xhlp%*%betasTrue
+y<-rpois(100,exp(etaTrue))
+plot(betasTrue,ylab=expression(beta),ylim=c(0,4),pch=19,type="b")
+```
+
+
+# Initial estimate
+This is a very poor initial estimate used to illustrate the algorithm. 
+Otherwise convergence for this simple example is way too quick
+
+```{r}
+iteration=0
+betas<-c(log(mean(y)),0,0)
+plot(betasTrue,ylab=expression(beta),ylim=c(0,4),pch=19,type="b")
+lines(betas,type="b",lty=2)
+```
+
+# Iteratively reweighted least squares
+## Pseudo data
+$$z_i= \eta_i + \frac{\partial \eta_i}{\partial \mu_i}(y_i -\mu_i)$$
+$$z_i= \eta_i + e^{-\eta_i} y_i -1$$
+
+## Weight matrix?
+$$[w_{ii}]= var_{y_i}^{-1} \left(\frac{\partial \mu}{\partial \eta}\right)^2$$
+$$[w_{ii}]= e^{\eta_i}$$
+
+## Run this update step multiple times 
+First 3 times (colors are black 0, red iteration 1, green iteration 2, blue iteration 3)
+
+```{r}
+plot(betasTrue,ylab=expression(beta),ylim=c(0,4),pch=19,type="b")
+lines(betas,type="b",lty=2)
+
+#Calculate current eta
+eta<-xhlp%*%betas
+
+iteration=0
+for (i in 1:3)
+{
+#start IRLS UPDATE STEP
+iteration=iteration+1
+#calculate pseudo data based on current betas
+z=eta+exp(-eta)*(y-exp(eta))
+#calculate new weights: diagonal elements
+w<-c(exp(eta))
+
+#update betas
+lmUpdate<-lm(z~-1+xhlp,weight=w)
+#eta<-xhlp%*%betas
+eta<-lmUpdate$fitted
+betas<-lmUpdate$coef
+lines(betas,type="b",col=iteration+1,pch=iteration,lty=2)
+}
+```
+
+
+# Comparison with glm function
+## Smarter initialisation
+```{r}
+z<-log(y+.5)
+betas<-lm(z~-1+xhlp)$coef
+plot(betasTrue,ylab=expression(beta),ylim=c(0,4),pch=19,type="b")
+lines(betas,col=2,type="b",lty=2)
+#calculate current eta
+eta<-xhlp%*%betas
+```
+
+## Evaluation Stopping Criterion
+
+- Residual deviance: Is 2 log of LR between best possible fit and current fit 
+$$LR=\frac{L_\text{best}}{L_\text{current}}$$
+$$D=2 (\log L_\text{best}- \log L_\text{current})$$
+$$D=2 (l_\text{best}-l_\text{current})$$
+- Best fit: $\mu=y$ 
+- Optimal poisson: 
+$$ l_\text{best}=\sum\left[y_i \log(y_i) - y_i - \log\left(y_i!\right)\right]$$
+- Current fit
+$$ l_\text{current}=\sum \left[y_i \eta_i -e^{\eta_i} - log\left(y_i!\right)\right]$$
+- Deviance D: 
+$$D = 2 \sum \left[ y_i log(y_i) - y_i \eta_i - (y_i -e^{\eta_i})\right]$$
+- Problem to calculate it if y=0 but by apply l'Hopital's rule we know
+$$\lim_{y_i \to 0} y_i \log(y_i) =0$$
+
+```{r}
+ylogy<-function(y)
+{
+return(ifelse(y==0,rep(0,length(y)),y*log(y)))
+}
+
+deviance<-2*sum(ylogy(y)-y*eta-(y-exp(eta)))
+
+devianceOld<-1e30
+```
+
+
+# Run this update step multiple times until convergence 
+```{r}
+plot(betasTrue,ylab=expression(beta),ylim=c(0,4),pch=19,type="b")
+lines(betas,type="b",lty=2)
+
+tol<-1e-6
+iteration=0
+while(((devianceOld-deviance)/devianceOld)>tol)
+{
+#start IRLS UPDATE STEP
+iteration=iteration+1
+#calculate pseudo data based on current betas
+z=eta+exp(-eta)*(y-exp(eta))
+#calculate new weights: diagonal elements
+w<-c(exp(eta))
+
+#update betas
+lmUpdate<-lm(z~-1+xhlp,weight=w)
+#eta<-xhlp%*%betas
+eta<-lmUpdate$fitted
+betas<-lmUpdate$coef
+lines(betas,type="b",col=iteration+1,pch=iteration,lty=2)
+
+#criterion for convergence 
+devianceOld<-deviance
+deviance<-2*sum(ylogy(y)-y*eta-(y-exp(eta)))
+cat("iteration",iteration,"Deviance Old",devianceOld,"Deviance", deviance,"\n")
+}
+```
+
+## Comparison with glm function in R
+### Variance $\beta$?
+$$\Sigma_{\beta}=\left(\mathbf{X}^T\mathbf{W} \mathbf{X}\right)^{-1}$$
+
+```{r}
+varBeta=solve(t(xhlp)%*%diag(w)%*%xhlp)
+```
+
+### Fit GLM
+Use -1 because intercept is already in xhlp
+```{r}
+glmfit=glm(y~-1+xhlp,family=poisson)
+comp=data.frame(glmfit=c(glmfit$deviance,glmfit$coef,summary(glmfit)$coef[,2]),ourFit=c(deviance,betas,sqrt(diag(varBeta))))
+row.names(comp)=c("deviance",paste("beta",1:3,sep=""),paste("se",1:3,sep=""))
+comp
+```

@@ -1,0 +1,126 @@
+---
+title: "Elegans: DE analysis"
+author: "Lieven Clement"
+output:
+  BiocStyle::html_document
+---
+
+After fertilization but prior to the onset of zygotic transcription, the C. elegans zygote cleaves asymmetrically to create the anterior AB and posterior P1 blastomeres, each of which goes on to generate distinct cell lineages. To understand how patterns of RNA inheritance and abundance arise after this first asymmetric cell division, we pooled hand-dissected AB and P1 blastomeres and performed RNA-seq. 
+http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE59943
+
+The reads have been aligned to the genome and summarized to gene level in the Rsubread tutorial. 
+
+```{r}
+library(edgeR)
+```
+
+#Read featurecounts object
+
+We import the featurecounts object that we have stored. 
+
+```{r}
+fc <- readRDS("fcElegans.rds")
+names(fc)
+counts_featurecounts <- fc$counts
+head(counts_featurecounts)
+dim(counts_featurecounts)
+fc$stat
+```
+
+## Read Meta Data
+
+```{r}
+target<-readRDS("elegansMetaData.rds")
+```
+
+# Data Analysis
+## Setup count object edgeR
+
+```{r}
+dge<-DGEList(fc$counts)
+substr(colnames(dge),1,10)==target$Run
+```
+
+Order of information in target file and count table is the same
+
+```{r}
+colnames(dge)<-paste0(target$`cell type:ch1`,target$`replicate:ch1`)
+cellType<-as.factor(target$`cell type:ch1`)
+```
+
+## Normalisation
+```{r}
+dge<-calcNormFactors(dge)
+```
+
+
+
+
+## Data exploration 
+
+One way to reduce dimensionality is the use of multidimensional scaling (MDS). For MDS, we first have to calculate all pairwise distances between our objects (samples in this case), and then create a (typically) two-dimensional representation where these pre-calculated distances are represented as accurately as possible. This means that depending on how the pairwise sample distances are defined, the two-dimensional plot can be very different, and it is important to choose a distance that is suitable for the type of data at hand.
+
+edgeR contains a function plotMDS, which operates on a DGEList object and generates a two-dimensional MDS representation of the samples. The default distance between two samples can be interpreted as the "typical" log fold change between the two samples, for the genes that are most different between them (by default, the top 500 genes, but this can be modified). We generate an MDS plot from the DGEList object dge, coloring by the treatment and using different plot symbols for different cell lines.
+
+```{r}
+plotMDS(dge, top = 500,col=as.double(cellType))
+```
+
+
+
+
+## Differential analysis
+
+### Filtering
+```{r}
+design<-model.matrix(~cellType)
+keep <- filterByExpr(dge, design)
+dge <- dge[keep, ,keep.lib.sizes=FALSE]
+```
+
+The option keep.lib.sizes=FALSE causes the library sizes to be recomputed after the filtering. This is generally recommended, although the effect on the downstream analysis is usually small.
+
+The normalisation factors have to be recalculated upon filtering.
+
+```{r}
+dge<-calcNormFactors(dge)
+```
+
+### Model
+
+We first estimate the overdispersion. 
+
+```{r}
+dge <- estimateDisp(dge, design)
+plotBCV(dge)
+```
+
+
+Finally, we fit the generalized linear model and perform the test. In the glmLRT function, we indicate which coefficient (which column in the design matrix) that we would like to test for. It is possible to test more general contrasts as well, and the user guide contains many examples on how to do this. The topTags function extracts the top-ranked genes. You can indicate the adjusted p-value cutoff, and/or the number of genes to keep.
+
+```{r}
+fit <- glmFit(dge, design)
+lrt <- glmLRT(fit, coef = ncol(design))
+ttAll <-topTags(lrt, n = nrow(dge)) # all genes
+hist(ttAll$table$PValue)
+tt <- topTags(lrt, n = nrow(dge), p.value = 0.05) # genes with adj.p<0.05
+tt
+```
+
+### Plots
+
+We first make a volcanoplot and an MA plot.
+
+```{r}
+library(ggplot2)
+volcano<- ggplot(ttAll$table,aes(x=logFC,y=-log10(PValue),color=FDR<0.05)) + geom_point() + scale_color_manual(values=c("black","red"))
+volcano
+plotSmear(lrt, de.tags = row.names(tt$table))
+```
+
+Another way of representing the results of a differential expression analysis is to construct a heatmap of the top differentially expressed genes. Here, we would expect the contrasted sample groups to cluster separately. A heatmap is a "color coded expression matrix", where the rows and columns are clustered using hierarchical clustering. Typically, it should not be applied to counts, but works better with transformed values. Here we show how it can be applied to the variance-stabilized values generated above. We choose the top 30 differentially expressed genes. There are many functions in R that can generate heatmaps, here we show the one from the pheatmap package.
+
+```{r}
+library(pheatmap)
+pheatmap(cpm(dge,log=TRUE)[rownames(tt$table)[1:30],])
+```

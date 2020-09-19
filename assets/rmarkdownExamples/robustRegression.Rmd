@@ -1,0 +1,101 @@
+---
+title: "Robust Regression"
+author: "Lieven Clement"
+date: "29 Sep 2015"
+output: html_notebook
+---
+#Robust regression in R
+##simulate 20 observations from a linear model with errors that follow a normal distribution
+```{r}
+set.seed=112358
+nobs<-20
+sdy<-1
+x<-seq(0,1,length=nobs)
+y<-10+5*x+rnorm(nobs,sd=sdy)
+```
+#add outlier at high leverage point
+```{r}
+y[nobs]<-7
+```
+
+##fit linear model
+```{r}
+ols<-lm(y~x)
+```
+##fit robust linear model
+```{r}
+library(MASS)
+mEst<-rlm(y~x)
+```
+
+##plot results
+```{r}
+plot(x,y)
+abline(ols,lwd=2)
+abline(mEst,col="red",lwd=2)
+legend("topleft",legend=c("OLS","M-estimation"),lwd=2,col=1:2)
+round(mEst$w,3)
+```
+
+#Implement it yourself
+##start from ols fit
+```{r}
+lmMod=ols
+```
+
+##Use robust variance estimator to calculate the z
+```{r}
+res=lmMod$res
+stdev=mad(res)
+median(abs(res-median(res)))*1.4826
+z=res/stdev
+```
+##calculate weights
+##use psi.huber function
+```{r}
+w=psi.huber(z)
+plot(x,y)
+plot(x,lmMod$res)
+plot(x,lmMod$res,cex=w)
+```
+#perform a weighted regression use lm with weights=w
+```{r}
+lmMod=lm(y~x,weights=w)
+```
+#plot results
+```{r}
+plot(x,y)
+abline(ols,lwd=2)
+abline(mEst,col="red",lwd=2)
+abline(lmMod,col="blue",lwd=2)
+legend("topleft",legend=c("OLS","M-estimation","Our Impl"),lwd=2,col=c("black","red","blue"))
+```
+#repeat this many times
+```{r}
+lmMod=ols
+for (k in 1:10)
+{
+######repeat this part several times until convergence
+#use robust variance estimator to calculate the z
+res=lmMod$res
+stdev=mad(res)
+median(abs(res-median(res)))*1.4826
+
+z=res/stdev
+
+#calculate weights
+#use psi.huber function
+w=psi.huber(z)
+
+#perform a weighted regression use lm with weights=w
+lmMod=lm(y~x,weights=w)
+
+#plot results
+plot(x,y)
+abline(ols,lwd=2)
+abline(mEst,col="red",lwd=2)
+abline(lmMod,col="blue",lwd=2)
+legend("topleft",legend=c("OLS","M-estimation","Our Impl"),lwd=2,col=c("black","red","blue"))
+####################################
+}
+```

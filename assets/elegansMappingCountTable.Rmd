@@ -1,0 +1,100 @@
+---
+title: "Elegans: Read mapping and count table"
+author: "Lieven Clement"
+output:
+  BiocStyle::html_document
+---
+
+# Background
+After fertilization but prior to the onset of zygotic transcription, the C. elegans zygote cleaves asymmetrically to create the anterior AB and posterior P1 blastomeres, each of which goes on to generate distinct cell lineages. To understand how patterns of RNA inheritance and abundance arise after this first asymmetric cell division, we pooled hand-dissected AB and P1 blastomeres and performed RNA-seq. 
+http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE59943
+
+```{r}
+library(Rsubread)
+library( "GEOquery" )
+```
+
+We will use the Rsubread read mapper because that is avaible in R for all platforms (Linux, Windows and Mac).
+For real projects I prefer the use of STAR. 
+
+# Get info on experiment
+
+## Get info on samples
+Get all info from GEO.
+get sample info via getGEO (info from samples)
+
+```{r}
+gse<-getGEO("GSE59943")
+length(gse)
+```
+There are two objects because there were runs with two different machines. 
+Combine the data from both files and add sample name column in order to be able to link the info to that from SRA.
+
+```{r}
+pdata<-rbind(pData(gse[[1]]),pData(gse[[2]]))
+pdata$SampleName<-rownames(pdata)
+```
+
+## Get info on sequencing files
+
+Download SRA info. To link sample info to info sequencing: Go to corresponding SRA page and save the information via the "Send to: File button"
+This file can also be used to make a script to download sequencing files from the web. 
+Note that sra files can be converted to fastq files via the fastq-dump function of the sra-tools. 
+
+```{r}
+sraInfo<-read.csv("SraRunInfo.csv")
+pdata<-merge(pdata,sraInfo,by="SampleName")
+pdata$Run
+```
+
+The run is also the name of the SRA file so we will be able to link alignment file name to the experiment via the SRA file info.
+
+
+# Build index for C. elegans 
+
+Download the Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz from ensembl. 
+Note that there is no info on multiple haplotypes so the primary assembly files are missing. So the info in toplevel file is the primary assembly. 
+
+```{r}
+path<-"~/Downloads/elegans/"
+elegansGenome<-paste0(path,"Caenorhabditis_elegans.WBcel235.dna.toplevel.fa.gz")
+system("mkdir elegans_index")
+indexName<-"elegans_index/elegans_index_WBcel235_rsubread"
+buildindex(basename=indexName,reference=elegansGenome)
+```
+
+## set path to reads and output
+
+```{r}
+fastqDir  <- paste0(path,"fastQ")
+fls <- list.files(fastqDir, "fastq.gz", full=TRUE)
+names(fls) <- sub("small.fastq.gz", "", basename(fls))
+system("mkdir bamDir")
+bamDir<-"./bamDir"
+bamfls<-paste0(bamDir,"/",names(fls),".bam")
+names(bamfls)<-names(fls)
+```
+
+## Readmapping
+The offset for the phred scores is 64. We find info on illumina incoding in quality control step of fastQC.
+
+```{r}
+phredOffset<-64
+align(index=indexName,readfile1=fls,input_format="gzFASTQ",output_format="BAM",output_file=bamfls,phredOffset=phredOffset)
+```
+
+#CountTable
+```{r}
+fcElegans<-featureCounts(files=bamfls,annot.ext=paste0(path,"Caenorhabditis_elegans.WBcel235.98.gtf.gz"),isGTFAnnotationFile=TRUE, GTF.featureType = "exon", GTF.attrType = "gene_id", useMetaFeatures = TRUE, strandSpecific = 0, 
+                    isPairedEnd = FALSE)
+countTableElegans<-fcElegans$counts
+```
+
+We save the countTable for future use
+
+```{r}
+saveRDS(fcElegans,file="fcElegans.rds")
+saveRDS(pdata,file="elegansMetaData.rds")
+```
+
+

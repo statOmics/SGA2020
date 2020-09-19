@@ -1,0 +1,111 @@
+---
+title: "Airway: Read mapping and count table"
+author: "Lieven Clement"
+output:
+  BiocStyle::html_document
+---
+
+# Background
+The data used in this workflow comes from an RNA-seq experiment where airway smooth muscle cells were treated with dexamethasone, a synthetic glucocorticoid steroid with anti-inflammatory effects (Himes et al. 2014). Glucocorticoids are used, for example, by people with asthma to reduce inflammation of the airways. In the experiment, four human airway smooth muscle cell lines were treated with 1 micromolar dexamethasone for 18 hours. For each of the four cell lines, we have a treated and an untreated sample.
+For more description of the experiment see the article, PubMed entry 24926665, and for raw data see the GEO entry GSE52778.
+
+# Data
+FastQ files with a small subset of the reads can be found on https://github.com/statOmics/SGA2019/tree/data-rnaseq
+
+
+```{r}
+library("Rsubread")
+library("GEOquery")
+library("tidyverse")
+getwd()
+```
+
+We will use the Rsubread read mapper because that is avaible in R for all platforms (Linux, Windows and Mac).
+For real projects I prefer the use of STAR. 
+
+# Get info on experiment
+
+## Get info on samples
+Get all info from GEO.
+get sample info via getGEO (info from samples)
+
+```{r}
+gse<-getGEO("GSE52778")
+length(gse)
+```
+
+There is one object for this experiment. 
+
+```{r}
+pdata<-pData(gse[[1]])
+pdata$SampleName<-rownames(pdata) %>% as.factor
+head(pdata)[1:6,]
+```
+
+
+## Get info on sequencing files
+
+Download SRA info. To link sample info to info sequencing: Go to corresponding SRA page and save the information via the "Send to: File button"
+This file can also be used to make a script to download sequencing files from the web. 
+Note that sra files can be converted to fastq files via the fastq-dump function of the sra-tools. 
+
+```{r}
+sraInfo<-read.csv("SraRunInfo.csv")
+levels(pdata$SampleName)==levels(sraInfo$SampleName)
+```
+
+SampleNames are can be linked.
+
+
+```{r}
+pdata<-merge(pdata,sraInfo,by="SampleName")
+pdata$Run
+```
+
+The run is also the name of the SRA file so we will be able to link alignment file name to the experiment via the SRA file info.
+
+# Path to Genome index
+
+All reads in the subsampled fastq files map to chromosome 1.
+We have created an index for the chromosome 1 of the Human reference genome in an other R-markdown file. 
+We will reuse it here. 
+
+```{r}
+indexName<-"airway_index/homo_sapiens_GRCh38_dna_chromosome_1_rsubread"
+```
+
+## Set path to reads and output
+
+```{r}
+fls1 <- list.files("fastq", full=TRUE,pattern="1.fastq")
+fls2 <- list.files("fastq", full=TRUE,pattern="2.fastq")
+system("mkdir bamDir")
+bamDir<-"./bamDir"
+bamfls<-paste0(bamDir,"/",substr(basename(fls1),1,10),".bam")
+```
+
+## Readmapping
+The offset for the phred scores is 64. We find info on illumina incoding in quality control step of fastQC.
+
+```{r}
+phredOffset<-33
+align(index=indexName,readfile1=fls1,readfile2=fls2,input_format="FASTQ",output_format="BAM",output_file=bamfls,phredOffset=phredOffset)
+```
+
+#CountTable
+```{r}
+fcAirway<-featureCounts(files=bamfls,annot.ext="Homo_sapiens.GRCh38.98.gtf.gz",isGTFAnnotationFile=TRUE, GTF.featureType = "exon", GTF.attrType = "gene_id", useMetaFeatures = TRUE, strandSpecific = 0, 
+                    isPairedEnd = TRUE)
+head(fcAirway$counts)
+```
+
+
+
+```{r}
+saveRDS(fcAirway,file="fcAirway.rds")
+saveRDS(pdata,file="airwayMetaData.rds")
+```
+
+
+
+

@@ -1,0 +1,13 @@
+---
+title: "Airway: Read mapping and count table"
+author: "Lieven Clement"
+output:
+  BiocStyle::html_document
+---
+
+# Background
+The data used in this workflow comes from an RNA-seq experiment where airway smooth muscle cells were treated with dexamethasone, a synthetic glucocorticoid steroid with anti-inflammatory effects (Himes et al. 2014). Glucocorticoids are used, for example, by people with asthma to reduce inflammation of the airways. In the experiment, four human airway smooth muscle cell lines were treated with 1 micromolar dexamethasone for 18 hours. For each of the four cell lines, we have a treated and an untreated sample.
+For more description of the experiment see the article, PubMed entry 24926665, and for raw data see the GEO entry GSE52778.
+
+# Data
+FastQ files with a small subset of the reads can be found on https://github.com/statOmics/SGA2019/tree/data-rnaseq

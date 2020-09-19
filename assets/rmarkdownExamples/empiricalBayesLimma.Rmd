@@ -1,0 +1,30 @@
+---
+title: "R Notebook"
+author: "Lieven Clement"
+output: html_notebook
+---
+
+We will illustrate the empirical Bayes procedure of limma and MSqRob. 
+We simulate 3000 protein log2 expression values in 12 samples from the normal distribution.
+All proteins in our simulation have the same variance. 
+
+```{r}
+set.seed(1240)
+library(limma)
+hlp<-rnorm(3000*12,mean=rep(runif(3000,min=28,max=30),12),sd=1)
+dim(hlp)<-c(3000,12)
+boxplot(t(hlp[1:10,]),ylab="log2 expression",xlab="protein")
+```
+
+Estimate variance
+
+```{r}
+#sample var for each row
+hlpVar<-apply(hlp,1,var)
+#squeeze variances using Limma 
+hlpVarSq<-squeezeVar(hlpVar,df=11)
+hlpVarSq$df.prior
+hlpVarSq$var.prior
+
+plot(hlpVar,hlpVarSq$var.post)
+```

@@ -1,0 +1,192 @@
+---
+title: "Hammer Dataset"
+output:
+  BiocStyle::html_document
+---
+
+
+```{r,echo=FALSE}
+library(edgeR)
+library(gplots)
+library(pheatmap)
+library(RColorBrewer)
+```
+
+#Introduction
+
+Researchers assessed the effect of spinal nerve ligation (SNL) on the transcriptome of rats. In this experiment, transcriptome profiling occurred at two weeks and two months after treatment, for both the SNL group and a control group. Two biological replicates are used for every treatment - time combination. The researchers are interested in early and late effects and in genes for which the effect changes over time. 
+
+```{r}
+file="http://bowtie-bio.sourceforge.net/recount/ExpressionSets/hammer_eset.RData"
+load(url(file))
+hammer.eset
+```
+
+```{r}
+pData(hammer.eset)
+````
+
+```{r}
+library(tidyverse)
+pData(hammer.eset)
+hammer.eset %>% exprs %>% head
+```
+
+#Design
+
+
+
+The researchers are interested in an effect of the treatment at the early time point, the late timepoint and the treatment $\times$ time interaction. 
+
+We can also model the mean of each treatment time combination separately. 
+
+```{r}
+pData(hammer.eset)$time<-factor(rep(c("2m","2w"),each=4),levels = c("2w","2m"))
+levels(pData(hammer.eset)$protocol)<-c("c","snl")
+pData(hammer.eset)$treatTime<-as.factor(paste(pData(hammer.eset)$protocol,pData(hammer.eset)$time,sep="-"))
+pData(hammer.eset)$treatTime
+```
+The read count $y_{ig}$ for gene $g$ of mouse $i$ is then modelled as follows: 
+
+$$
+\left\{
+\begin{array}{lcl}
+y_{ig} &\sim& NB(\mu_{ig},\phi_g)\\
+E[y_{ig}\vert \mathbf{x}_{ig}]&=&\mu_{ig}\\
+log(\mu_{ig})&=&\eta_{ig}\\
+\eta_{ig}&=&\beta_1 x_{i1} + \beta_2x_{i2} + \beta_3x_{i3}+ \beta_4x_{i4} + \log N_i
+\end{array}\right.
+$$
+
+with $x_{1}$ a dummy variable that is 1 if a mouse had the control treatment and was sacrificed after 2 months, $x_{2}$ the dummy for mice with the control treatment and was sacrificed after 2 weeks, $x_{3}$ a dummy for mice with spinal nerve ligation sacrificed after 2 months and $x_{4}$ a dummy for mice with spn sacrificed after 2 weeks.  
+
+
+The design matrix is constructed for the linear predictor. 
+
+
+```{r}
+dge <- DGEList(counts=exprs(hammer.eset))
+dge$sample
+```
+
+We model each group mean and remove the intercept from the model. 
+```{r}
+design <- model.matrix(~-1+treatTime,pData(hammer.eset))
+rownames(design) = colnames(dge)
+design
+```
+
+Filtering
+```{r}
+keep <- filterByExpr(dge, design)
+ dge <- dge[keep, , keep.lib.sizes=FALSE]
+```
+
+```{r}
+dge <- calcNormFactors(dge)
+dge$samples
+```
+
+#Data exploration
+
+An MDS plot shows the leading log fold changes between the 8 samples. There is a large effect according to the SNL. Are there issues with the design? 
+
+```{r}
+plotMDS(dge,labels=paste(hammer.eset$protocol,hammer.eset$time,sep="-"),col=as.double(hammer.eset$protocol))
+```
+
+#Analysis
+
+
+```{r}
+dge <- estimateDisp(dge, design, robust=TRUE)  
+plotBCV(dge)
+fit <- glmFit(dge,design)
+```
+
+
+##Early
+
+DE at the early timepoint can be assessed by testing the null hypothesis 
+
+$$
+H_0: \log \text{FC}^\text{2 weeks}_\text{snl-c}=0 \rightarrow \beta_4-\beta_2=0
+$$
+
+against the two side alternative hypothesis
+
+$$
+H_1: \log \text{FC}^\text{2 weeks}_\text{snl-c}\neq 0 \rightarrow \beta_4-\beta_2\neq0
+$$
+
+```{r}
+early <- glmLRT(fit,contrast=c(0,-1,0,1))
+ttEarly<-topTags(early, n = nrow(dge)) # all genes
+hist(ttEarly$table$PValue)
+summary(dtEarly <- decideTestsDGE(early))
+volcano<- ggplot(ttEarly$table,aes(x=logFC,y=-log10(PValue),color=FDR<0.05)) + geom_point() + scale_color_manual(values=c("black","red"))
+volcano
+plotSmear(early,de.tags=rownames(dge)[as.logical(dtEarly)],ylab="log FC_late - log FC_early")
+pheatmap(cpm(dge,log=TRUE)[rownames(ttEarly$table)[1:30],],labels_col = paste(hammer.eset$protocol,hammer.eset$time,sep="-"))
+```
+
+
+##Late
+
+The effect of the treatment after two months can be estimated by the log fold change corresponding to the sum of the main effect and the interaction. 
+This can be assessed by testing the null hypothesis 
+
+$$
+H_0: \log \text{FC}^\text{2 months}_\text{snl-c}=0 \rightarrow \beta_3-\beta_1=0
+$$
+
+against the two side alternative hypothesis
+
+$$
+H_1: \log \text{FC}^\text{2 months}_\text{snl-c}\neq0 \rightarrow \beta_3-\beta_1\neq0
+$$
+
+
+```{r}
+late<-glmLRT(fit,contrast=c(-1,0,1,0))
+ttLate<-topTags(late, n = nrow(dge)) # all genes
+hist(ttLate$table$PValue)
+summary(dtLate <- decideTestsDGE(late))
+volcano<- ggplot(ttLate$table,aes(x=logFC,y=-log10(PValue),color=FDR<0.05)) + geom_point() + scale_color_manual(values=c("black","red"))
+volcano
+plotSmear(late,de.tags=rownames(dge)[as.logical(dtLate)],ylab="log FC_late - log FC_early")
+pheatmap(cpm(dge,log=TRUE)[rownames(ttLate$table)[1:30],],labels_col = paste(hammer.eset$protocol,hammer.eset$time,sep="-"))
+```
+
+##Interaction
+
+To assess if the treatment effect changes over time, we will test the null hypothesis that the interaction term equals zero vs the alternative that the interaction term is different from zero.  
+
+This can be assessed by testing the null hypothesis 
+
+$$
+H_0: \log \text{FC}^\text{2 months}_\text{snl-c}-\log \text{FC}^\text{2 weeks}_\text{snl-c}=0 \rightarrow (\beta_3-\beta_1)-(\beta_4-\beta_2)=0
+$$
+
+against the alternative hyptothesis
+
+$$
+H_1: \log \text{FC}^\text{2 months}_\text{snl-c}-\log \text{FC}^\text{2 weeks}_\text{snl-c}\neq0 \rightarrow (\beta_3-\beta_1)-(\beta_4-\beta_2)\neq0
+$$
+
+```{r}
+inter <- glmLRT(fit,contrast=c(-1,1,1,-1))
+ttInter<-topTags(inter, n = nrow(dge)) # all genes
+hist(ttInter$table$PValue)
+summary(dtInter <- decideTestsDGE(inter))
+volcano<- ggplot(ttInter$table,aes(x=logFC,y=-log10(PValue),color=FDR<0.05)) + geom_point() + scale_color_manual(values=c("black","red"))
+volcano
+plotSmear(inter,de.tags=rownames(dge)[as.logical(dtInter)],ylab="log FC_late - log FC_early")
+pheatmap(cpm(dge,log=TRUE)[rownames(ttInter$table)[1:30],],labels_col = paste(hammer.eset$protocol,hammer.eset$time,sep="-"))
+```
+
+##Remarks
+
+- There are very many DE genes according to the SNL treatment at the early and late timepoint. Remember the issues with the design? 
+
+- There are very few interactions significant. Can you explain this? 
