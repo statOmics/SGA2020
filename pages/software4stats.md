@@ -19,7 +19,7 @@ There are three options to work with the software:
 3. To install all required packages, please copy and paste this line of code in your R console.
 
 ```
-source("https://raw.githubusercontent.com/statOmics/SGA2019/master/install.R")
+source("https://raw.githubusercontent.com/statOmics/SGA2020/master/install.R")
 ```
 
 - Download and unzip SGA2019 master tree of the course to have the latest versions of the shiny apps.

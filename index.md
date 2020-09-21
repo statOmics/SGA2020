@@ -30,7 +30,8 @@ A primer to R and Data visualisation  in R can be found in:
 **Introduction**
 
   - Slides: [Intro](assets/intro.pdf)
-  
+  - Software: [Install and Launch Statistical Software](pages/software4stats.md)
+
 
 ---
 
