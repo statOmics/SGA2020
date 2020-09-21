@@ -31,7 +31,7 @@ A primer to R and Data visualisation  in R can be found in:
 
   - Slides: [Intro](assets/intro.pdf)
   - Software: [Install and Launch Statistical Software](pages/software4stats.md)
-
+  - Recap linear models: [case study](assets/recapGeneralLinearModel.html)
 
 ---
 
