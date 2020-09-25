@@ -33,6 +33,17 @@ A primer to R and Data visualisation  in R can be found in:
   - Software: [Install and Launch Statistical Software](pages/software4stats.md)
   - Recap linear models: [case study](assets/recapGeneralLinearModel.html)
 
+**Part I: Quantitative proteomics**
+
+  - [Download Tutorial Data](https://github.com/statOmics/SGA2019/tree/data)
+
+
+  1. Bioinformatics for proteomics
+  - Slides: [Bioinformatics for Proteomics](assets/martens_proteomics_bioinformatics_20190923.pdf)
+  - Students can sharpen their background knowledge on Mass Spectrometry, Proteomics & Bioinformatics for Proteomics
+ here:[Mass Spectrometry and Bioinformatics for Proteomics](pages/techVideos.md)
+
+
 ---
 
 ##### [Instructors](pages/instructors.md)
