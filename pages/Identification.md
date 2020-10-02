@@ -62,11 +62,13 @@ Use the mzid file for the pyrococcus example, which can be found at data/identif
 First run the command
 
 ```
-source('http://github.com/statomics/')
+source('https://statomics.github.io/SGA2020/assets/EvalTargetDecoys.R')
 ```
 
-to load the R script 
-Alter the vignette to assess the decoy quality.
+to load the function evalTargetDecoy.
+
+Follow the [vignette](exampleEvalTDA.html) and alter a script to assess the decoy quality in the pyrococcus.
+Note, that the decoys are stored in the `is.decoy` column and that the score   `ms-gf:specevalue`.
 
 ##### 1. Assess the search you performed in "Tutorial 1. Peptide and Protein Identification" at https://compomics.com/bioinformatics-for-proteomics/identification/
 Open the search from tutorial 1.3. in Peptide Shaker and export the search to an mzid file by clicking export > Peptide Shaker Project As > mzIdentML. Evaluate the TDA for the ommsa, X!Tandem and the Peptide Shaker score.
