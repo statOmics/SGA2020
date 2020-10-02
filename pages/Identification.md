@@ -67,7 +67,7 @@ source('https://statomics.github.io/SGA2020/assets/EvalTargetDecoys.R')
 
 to load the function evalTargetDecoy.
 
-Follow the [vignette](exampleEvalTDA.html) and alter a script to assess the decoy quality in the pyrococcus.
+Follow the [vignette](../assets/exampleEvalTDA.html) and alter a script to assess the decoy quality in the pyrococcus.
 Note, that the decoys are stored in the `is.decoy` column and that the score   `ms-gf:specevalue`.
 
 ##### 1. Assess the search you performed in "Tutorial 1. Peptide and Protein Identification" at https://compomics.com/bioinformatics-for-proteomics/identification/
