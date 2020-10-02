@@ -32,6 +32,7 @@ A primer to R and Data visualisation  in R can be found in:
   - Slides: [Intro](assets/intro.pdf)
   - Software: [Install and Launch Statistical Software](pages/software4stats.md)
   - Recap linear models: [case study](assets/recapGeneralLinearModel.html)
+  - Entire analysis for KPNA2 gene: [KPNA2](assets/08-multipleRegression_KPNA2.html)
 
 **Part I: Quantitative proteomics**
 
