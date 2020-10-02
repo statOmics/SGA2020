@@ -77,8 +77,6 @@ Evaluate the TDA for the  X!Tandem, OMSSA and Peptide Shaker scores. What do you
 
 ##### 2. Pyrococcus - Peptide Shaker - Uniprot search
 
-Users familiar with R are advised to download the notebook [assessDecoys.Rmd](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/assessDecoys.Rmd)  and to alter it for the analysis.
-
 Do the analysis for the search MSGF+, X!Tandem, OMSSA and Peptide Shaker scores based on all Pyrococcus proteins in a search against all pyrococcus peptides in Uniprot (data/identification/pyroUniprot.mzid).
 
 What do you observe explain. [1.4.b]
