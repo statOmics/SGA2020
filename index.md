@@ -46,7 +46,7 @@ A primer to R and Data visualisation  in R can be found in:
 
  2. Identification
  - Slides:  [False Discovery Rate and Target Decoy Approach](assets/1_Identification_Evaluation_Target_Decoy_Approach.pdf)
- - Tutorial: [Evaluating Target Decoy Quality](pages/Identification.md) 
+ - Tutorial: [Evaluating Target Decoy Quality](pages/Identification.md), [example script identification](assets/identification.html) 
 
 ---
 
