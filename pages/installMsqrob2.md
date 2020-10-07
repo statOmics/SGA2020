@@ -5,7 +5,7 @@
 ```{r}
 BiocManager::install("rformassspectrometry/MsCoreUtils")
 BiocManager::install("rformassspectrometry/QFeatures")
-BiocManager::install("rformassspectrometry/msqrob2")
+BiocManager::install("statomics/msqrob2")
 ```
 
 - Check if your installation is working with the following example
