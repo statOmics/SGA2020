@@ -13,6 +13,7 @@ BiocManager::install("statomics/msqrob2")
 ```{r}
 library(msqrob2)
 data(pe)
+pe <- aggregateFeatures(pe,i="peptide",fcol="Proteins",name="protein")
 pe <- msqrob(pe,i="protein",formula=~condition,modelColumnName="rlm")
 getCoef(rowData(pe[["protein"]])$rlm[[1]])
 ```
