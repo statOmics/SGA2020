@@ -46,7 +46,12 @@ A primer to R and Data visualisation  in R can be found in:
 
  2. Identification
  - Slides:  [False Discovery Rate and Target Decoy Approach](assets/1_Identification_Evaluation_Target_Decoy_Approach.pdf)
- - Tutorial: [Evaluating Target Decoy Quality](pages/Identification.md), [example script identification](assets/identification.html) 
+ - Tutorial: [Evaluating Target Decoy Quality](pages/Identification.md), [example script identification](assets/identification.html)
+
+ 3. Preprocessing & Analysis of Label Free Quantitative Proteomics Experiments with Simple Designs
+ - Install Software: [Installation instructions msqrob2](pages/installMsqrob2.md)
+ - Slides: [Preprocessing](assets/2_MSqRob_data_analysisI.pdf)
+ - Tutorial: [preprocessing](pages/sdaMsqrobSimple.md)
 
 ---
 

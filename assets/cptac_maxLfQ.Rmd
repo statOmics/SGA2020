@@ -1,0 +1,237 @@
+---
+title: "Introduction to proteomics data analysis: MaxLFQ Summarization"
+author:
+- name: Lieven Clement
+output:
+  BiocStyle::html_document
+---
+
+
+# Background
+This case-study is a subset of the data of the 6th study of the Clinical
+Proteomic Technology Assessment for Cancer (CPTAC).
+In this experiment, the authors spiked the Sigma Universal Protein Standard
+mixture 1 (UPS1) containing 48 different human proteins in a protein background
+of 60 ng/$\mu$L Saccharomyces cerevisiae strain BY4741.
+Two different spike-in concentrations were used:
+6A (0.25 fmol UPS1 proteins/$\mu$L) and 6B (0.74 fmol UPS1 proteins/$\mu$L) [5].
+We limited ourselves to the data of LTQ-Orbitrap W at site 56.
+The data were searched with MaxQuant version 1.5.2.8, and
+detailed search settings were described in Goeminne et al. (2016) [1].
+Three replicates are available for each concentration.
+
+# Data
+
+We first import the data from peptideRaws.txt file. This is the file containing
+your peptideRaw-level intensities. For a MaxQuant search [6],
+this peptideRaws.txt file can be found by default in the
+"path_to_raw_files/combined/txt/" folder from the MaxQuant output,
+with "path_to_raw_files" the folder where the raw files were saved.
+In this vignette, we use a MaxQuant peptideRaws file which is a subset
+of the cptac study. This data is available in the `msdata` package.
+To import the data we use the `QFeatures` package.
+
+We generate the object peptideRawFile with the path to the peptideRaws.txt file.
+Using the `grepEcols` function, we find the columns that contain the expression
+data of the peptideRaws in the peptideRaws.txt file.
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(limma)
+library(QFeatures)
+library(msqrob2)
+library(plotly)
+
+proteinFile <- "https://raw.githubusercontent.com/statOmics/SGA2020/data/quantification/cptacAvsB_lab3/proteinGroups.txt"
+
+ecols <- MSnbase::grepEcols(
+  peptidesFile,
+  "Intensity ",
+  split = "\t")
+
+pe <- readQFeatures(
+  table = proteinFile,
+  fnames = 1,
+  ecol = ecols,
+  name = "proteinMaxLFQ", sep="\t")
+```
+
+In the following code chunk, we can extract the spikein condition from the raw file name.
+
+```{r}
+cond <- which(
+  strsplit(colnames(pe)[[1]][1], split = "")[[1]] == "A") # find where condition is stored
+
+colData(pe)$condition <- substr(colnames(pe), cond, cond) %>%
+  unlist %>%  
+  as.factor
+```
+
+
+# Preprocessing
+
+This section preforms standard preprocessing for the peptide data. This
+include log transformation, filtering and summarisation of the data.
+
+## Log transform the data
+
+```{r}
+pe <- zeroIsNA(pe, "proteinMaxLFQ") # convert 0 to NA
+pe <- logTransform(pe, base = 2, i = "proteinMaxLFQ", name = "proteinLog")
+limma::plotDensities(assay(pe[["proteinLog"]]))
+```
+
+## Quantile normalize the data
+```{r}
+pe <- normalize(pe, i = "proteinLog", method = "quantiles", name = "proteinMaxLFQNorm")
+```
+
+
+## Explore quantile normalized data
+
+After quantile normalisation the density curves for all samples coincide.
+
+```{r}
+limma::plotDensities(assay(pe[["proteinMaxLFQNorm"]]))
+```
+
+This is more clearly seen is a boxplot.
+
+```{r,}
+boxplot(assay(pe[["proteinMaxLFQNorm"]]), col = palette()[-1],
+        main = "Protein distribtutions upon normalisation", ylab = "intensity")
+
+```
+
+
+We can visualize our data using a Multi Dimensional Scaling plot,
+eg. as provided by the `limma` package.
+
+```{r}
+limma::plotMDS(assay(pe[["proteinMaxLFQNorm"]]), col = as.numeric(colData(pe)$condition))
+```
+
+The first axis in the plot is showing the leading log fold changes
+(differences on the log scale) between the samples.
+We notice that the leading differences (log FC)
+in the normalized and log transformed proteinMax data seems to be driven by technical variability.
+But, in the second dimension we see a separation according to the spike-in condition
+
+# Data Analysis
+
+## Estimation
+
+We model the protein level expression values using `msqrob`.
+By default `msqrob2` estimates the model parameters using robust regression.  
+
+```{r, warning=FALSE}
+pe <- msqrob(object = pe, i = "proteinMaxLFQNorm", formula = ~condition)
+```
+
+## Inference
+
+First, we extract the parameter names of the model.
+```{r}
+getCoef(rowData(pe[["proteinMaxLFQNorm"]])$msqrobModels[[1]])
+```
+
+Spike-in condition a is the reference class. So the mean log2 expression
+for samples from condition a is '(Intercept).
+The mean log2 expression for samples from condition B is '(Intercept)+conditionB'.
+Hence, the average log2 fold change between condition b and
+condition a is modelled using the parameter 'conditionB'.
+Thus, we assess the contrast 'conditionB=0' with our statistical test.
+
+```{r}
+L <- makeContrast("conditionB=0", parameterNames = c("conditionB"))
+pe <- hypothesisTest(object = pe, i = "proteinMaxLFQNorm", contrast = L)
+```
+
+
+## Plots
+
+### Volcano-plot
+
+
+```{r,warning=FALSE}
+volcano <- ggplot(rowData(pe[["proteinMaxLFQNorm"]])$conditionB,
+                  aes(x = logFC, y = -log10(pval), color = adjPval < 0.05)) +
+  geom_point(cex = 2.5) +
+  scale_color_manual(values = alpha(c("black", "red"), 0.5)) + theme_minimal()
+volcano
+```
+
+### Heatmap
+
+We first select the names of the proteins that were declared signficant.
+
+```{r}
+sigNames <- rowData(pe[["proteinMaxLFQNorm"]])$conditionB %>%
+  rownames_to_column("proteinMaxLFQNorm") %>%
+  filter(adjPval<0.05) %>%
+  pull(proteinMaxLFQNorm)
+heatmap(assay(pe[["proteinMaxLFQNorm"]])[sigNames, ])
+```
+
+### Boxplots
+
+We make boxplot of the log2 FC and stratify according to the whether a protein is spiked or not.
+
+```{r}
+rowData(pe[["proteinMaxLFQNorm"]])$conditionB %>%
+  rownames_to_column(var = "protein") %>%
+  ggplot(aes(x=grepl("UPS",protein),y=logFC)) +
+  geom_boxplot() +
+  xlab("UPS") +
+  geom_segment(
+    x = 1.5,
+    xend = 2.5,
+    y = log2(0.74/0.25),
+    yend = log2(0.74/0.25),
+    colour="red") +
+  geom_segment(
+    x = 0.5,
+    xend = 1.5,
+    y = 0,
+    yend = 0,
+    colour="red") +
+  annotate(
+    "text",
+    x = c(1,2),
+    y = c(0,log2(0.74/0.25))+.1,
+    label = c(
+      "log2 FC Ecoli = 0",
+      paste0("log2 FC UPS = ",round(log2(0.74/0.25),2))
+      ),
+    colour = "red")
+```
+
+### Detail plots
+
+
+```{r, warning=FALSE, message=FALSE}
+for (protName in sigNames)
+{
+pePlot <- pe[protName, , c("proteinMaxLFQNorm")]
+pePlotDf <- data.frame(longFormat(pePlot))
+pePlotDf$assay <- factor(pePlotDf$assay,
+                        levels = c("proteinMaxLFQNorm"))
+pePlotDf$condition <- as.factor(colData(pePlot)[pePlotDf$colname, "condition"])
+
+# plotting
+p1 <- ggplot(data = pePlotDf,
+       aes(x = colname, y = value, group = rowname)) +
+    geom_line() + geom_point() +  theme_minimal() +
+    facet_grid(~assay) + ggtitle(protName)
+print(p1)
+
+# plotting 2
+p2 <- ggplot(pePlotDf, aes(x = colname, y = value, fill = condition)) +
+  geom_boxplot(outlier.shape = NA) + geom_point(position = position_jitter(width = .1),
+                                                aes(shape = rowname)) +
+  scale_shape_manual(values = 1:nrow(pePlotDf)) +
+  labs(title = protName, x = "sample", y = "peptide intensity (log2)") + theme_minimal()
+  facet_grid(~assay)
+print(p2)
+}
+```
