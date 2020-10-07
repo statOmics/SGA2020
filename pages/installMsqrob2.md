@@ -3,9 +3,9 @@
 - Install the development packages for MsCoreUtils, QFeatures, msqrob2 from github:
 
 ```{r}
-BiocInstaller("rformassspectrometry/MsCoreUtils")
-BiocInstaller("rformassspectrometry/QFeatures")
-BiocInstaller("rformassspectrometry/msqrob2")
+BiocManager::install("rformassspectrometry/MsCoreUtils")
+BiocManager::install("rformassspectrometry/QFeatures")
+BiocManager::install("rformassspectrometry/msqrob2")
 ```
 
 - Check if your installation is working with the following example
