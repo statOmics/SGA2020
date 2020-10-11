@@ -54,6 +54,14 @@ A primer to R and Data visualisation  in R can be found in:
  - Slides: [Preprocessing](assets/2_MSqRob_data_analysisI.pdf)
  - Tutorial: [preprocessing](pages/sdaMsqrobSimple.md)
 
+ 4. Statistical Inference & Analysis of Experiments with Factorial Designs
+ - Slides: [Inference](assets/2_MSqRob_data_analysisII.pdf)
+ - Tutorial: [Statistical Data Analysis with MSqRob for Factorial Designs](pages/sdaMsqrobDesign.md)
+
+5. Reading Material and Technical details
+- [Sticker et al. (2020) Robust summarization and inference in proteome-wide label-free quantification](https://www.biorxiv.org/content/10.1101/668863v1)
+- Slides: [Inference](assets/parameterEstimationInferenceLinearModels.pdf)
+- Example: [html](assets/rmarkdownExamples/robustRegression.html), [rmd](https://raw.githubusercontent.com/statOmics/SGA2019/master/rmarkdownExamples/robustRegression.Rmd)
 ---
 
 ##### [Instructors](pages/instructors.md)

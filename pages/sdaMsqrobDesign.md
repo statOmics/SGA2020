@@ -22,36 +22,7 @@ A very powerful concept in experimental design is that of blocking [5]. In rando
 
 Figure 1. Example of a good (A) and a bad (B) design. In design A, both the green and orange treatments are divided equally within each block. That way, the treatment effect can be estimated within a block. In design B, each block contains only one treatment, so the treatment effect is entirely confounded with the blocking effect and it is thus impossible to draw meaningful conclusions on the treatment (unless one would be willing to assume that the blocking effect is negligible, which is a very strong assumption that cannot be verified based on the design).
 
-#### 3.2 Using MSqRob
-
-Users familiar with R are advised to download the notebook [cptacAvsB_lab3.Rmd](https://raw.githubusercontent.com/statOmics/SGA2019/gh-pages/assets/rmarkdownExamples/cptacAvsB_lab3.Rmd)  and to alter it for the analysis of both examples below.
-
-Users who are not familiar with R can use the MSqRob GUI. For installation instruction see [Install and Launch Statistical Software](./software4stats.md)
-
-When working with the online binder version, hit the binder button below:
-
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/statOmics/SGA2019/master?urlpath=rstudio)
-
-
-If you use the software on a more regular basis installing it in a local environment is advised, (see [software page](./software4stats.md)).
-
-Upon hitting the binder button an interactive statistical programming environment will open that is running on a cloud server. Open the launchMSqRobShinyApp.R file by clicking on the file in the bottom right panel.
-
-![Figure 2. Rstudio](./figs/rstudioWindowMsqrob1.png)
-
-A novel panel opens in the topleft. Click on runApp to launch the MSqROb app.
-
-![Figure 3. Rstudio](./figs/rstudioWindowMsqrob2.png)
-
-The MSqRob App is launched:
-
-![Figure 4. MSqRob Input tab](./figs/msqrobInput1.png)
-
-*Hint: Click on the question marks to get extra information about an input field.*
-
-<br/><br/>
-
-#### 3.3 Blocking: Mouse T-cell example
+#### 3.2 Blocking: Mouse T-cell example
 
 Duguet et al. 2017 compared the proteomes of mouse regulatory T cells (Treg) and conventional T cells (Tconv) in order to discover differentially regulated proteins between these two cell populations. For each biological repeat the proteomes were extracted for both Treg and Tconv cell pools, which were purified by flow cytometry. The data in data/quantification/mouseTcell on the SGA2019Data repository are a subset of the data [PXD004436](https://www.ebi.ac.uk/pride/archive/projects/PXD004436) on PRIDE.
 
@@ -64,18 +35,17 @@ Three subsets of the data are avialable:
 - peptidesRCB.txt: contains data for 4 bio-repeats only, but for each bio-repeat the Treg and Tconv proteome is profiled.   
 - peptides.txt: contains data of Treg and Tconv cells for 7 bio-repeats
 
-Users familiar with R are advised to download the notebook [cptacAvsB_lab3.Rmd](https://raw.githubusercontent.com/statOmics/SGA2019/gh-pages/assets/rmarkdownExamples/cptacAvsB_lab3.Rmd)  and to alter it for the analysis of the Mouse T-cell example.
-Users who are not familiar with R can do the analysis with the GUI.
+Adjust the script [cptac.html](../assets/cptac_median.html) for the analysis. Do not forget to alter the summarisation!
 
-##### 3.3.1. How would you analyse the CRD data?
+##### 3.2.1. How would you analyse the CRD data?
 
-##### 3.3.2. How would you analyse the RCB data?
+##### 3.2.2. How would you analyse the RCB data?
 
-##### 3.3.3. Try to explain the difference in the number of proteins that can be discovered with both designs?
+##### 3.2.3. Try to explain the difference in the number of proteins that can be discovered with both designs?
 
 <br/><br/>
 
-#### 3.4 Heart dataset
+#### 3.3 Heart dataset
 
 ![Figure 4. Heart](./figs/heart.png)
 
@@ -84,14 +54,12 @@ Researchers have assessed the proteome in different regions of the heart for 3 p
 Suppose that researchers are mainly interested in comparing the ventricular to the atrial proteome.
 Particularly, they would like to compare the left atrium to the left ventricle, the right atrium to the right ventricle, the average ventricular vs atrial proteome and if ventricular vs atrial proteome shifts differ between left and right heart region.
 
+Adjust the script [cptac.html](../assets/cptac_median.html) for the analysis. Do not forget to alter the summarisation!
 
-Users familiar with R are advised to download the notebook [cptacAvsB_lab3.Rmd](https://raw.githubusercontent.com/statOmics/SGA2019/gh-pages/assets/rmarkdownExamples/cptacAvsB_lab3.Rmd)  and to alter it for the analysis of the heart example.
-Users who are not familiar with R can do the analysis with the GUI.
+##### 3.3.1. Which factors will you use in the mean model?
 
-##### 3.4.1. Which factors will you use in the mean model?
+##### 3.3.2. Spell out the contrast for each research question?
 
-##### 3.4.2. Spell out the contrast for each research question?
+##### 3.3.3. Interpret the estimate for the top hit of each contrast?
 
-##### 3.4.3. Interpret the estimate for the top hit of each contrast?
-
-##### 3.4.4. Try to explain why there is such a large difference in the number of significant proteins that are found between the contrasts?
+##### 3.3.4. Try to explain why there is such a large difference in the number of significant proteins that are found between the contrasts?
