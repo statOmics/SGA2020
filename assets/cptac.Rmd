@@ -1,11 +1,16 @@
 ---
 title: "Introduction to proteomics data analysis: robust summarization"
-author:
-- name: Lieven Clement
+author: "Lieven Clement"
+date: "statOmics, Ghent University (https://statomics.github.io)"
 output:
-  BiocStyle::html_document
+    html_document:
+      code_download: true
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
 ---
-
 
 # Background
 This case-study is a subset of the data of the 6th study of the Clinical

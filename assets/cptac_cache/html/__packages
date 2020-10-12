@@ -1,10 +1,4 @@
 base
-methods
-datasets
-utils
-grDevices
-graphics
-stats
 BiocStyle
 tidyverse
 ggplot2
@@ -16,8 +10,6 @@ dplyr
 stringr
 forcats
 limma
-stats4
-parallel
 BiocGenerics
 S4Vectors
 IRanges
