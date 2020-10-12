@@ -60,8 +60,7 @@ A primer to R and Data visualisation  in R can be found in:
 
 5. Reading Material and Technical details
 - [Sticker et al. (2020) Robust summarization and inference in proteome-wide label-free quantification](https://www.biorxiv.org/content/10.1101/668863v1)
-- Slides: [Inference](assets/parameterEstimationInferenceLinearModels.pdf)
-- Example: [html](assets/rmarkdownExamples/robustRegression.html), [rmd](https://raw.githubusercontent.com/statOmics/SGA2019/master/rmarkdownExamples/robustRegression.Rmd)
+- Example: [html](assets/rmarkdownExamples/robustRegression.html)
 ---
 
 ##### [Instructors](pages/instructors.md)
