@@ -53,6 +53,9 @@ A primer to R and Data visualisation  in R can be found in:
  - Install Software: [Installation instructions msqrob2](pages/installMsqrob2.md)
  - Slides: [Preprocessing](assets/2_MSqRob_data_analysisI.pdf)
  - Tutorial: [preprocessing](pages/sdaMsqrobSimple.md)
+    - [cptac median](assets/cptac_median.html)
+    - [cptac robust](assets/cptac.html)
+    - [cptac maxLFQ](assets/cptac_maxLfQ.html)
 
  4. Statistical Inference & Analysis of Experiments with Factorial Designs
  - Slides: [Inference](assets/2_MSqRob_data_analysisII.pdf)
