@@ -1,0 +1,299 @@
+---
+title: "Proteomics data analysis: mouse Tcell example with RCB design and wrong data analysis"
+author: "Lieven Clement"
+date: "statOmics, Ghent University (https://statomics.github.io)"
+output:
+    html_document:
+      code_download: true
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
+---
+# Background
+Duguet et al. 2017 compared the proteomes of mouse regulatory T cells (Treg) and conventional T cells (Tconv) in order to discover differentially regulated proteins between these two cell populations. For each biological repeat the proteomes were extracted for both Treg and Tconv cell pools, which were purified by flow cytometry. The data in data/quantification/mouseTcell on the pdaData repository are a subset of the data [PXD004436](https://www.ebi.ac.uk/pride/archive/projects/PXD004436) on PRIDE.
+
+We will use a subset of the data with a randomized complete block (RCB) design, i.e. the dataset consists of four mice for which the proteome of both conventional and regulatory T cells are assessed.
+
+
+# Data
+
+We first import the peptides.txt file. This is the file that contains your peptide-level intensities. For a MaxQuant search [6], this peptides.txt file can be found by default in the "path_to_raw_files/combined/txt/" folder from the MaxQuant output, with "path_to_raw_files" the folder where raw files were saved. In this tutorial, we will use a MaxQuant peptides file from MaxQuant that can be found in the data tree of the SGA2020 github repository https://github.com/statOmics/SGA2020/tree/data/quantification/mouseTcell .
+
+To import the data we use the `QFeatures` package.
+
+We generate the object peptideRawFile with the path to the peptideRaws.txt file.
+Using the `grepEcols` function, we find the columns that contain the expression
+data of the peptideRaws in the peptideRaws.txt file.
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(limma)
+library(QFeatures)
+library(msqrob2)
+library(plotly)
+
+peptidesFile <- "https://raw.githubusercontent.com/statOmics/SGA2020/data/quantification/mouseTcell/peptidesRCB.txt"
+
+ecols <- MSnbase::grepEcols(
+  peptidesFile,
+  "Intensity ",
+  split = "\t")
+
+pe <- readQFeatures(
+  table = peptidesFile,
+  fnames = 1,
+  ecol = ecols,
+  name = "peptideRaw", sep="\t")
+
+pe
+pe[["peptideRaw"]]
+```
+
+We will make use from data wrangling functionalities from the tidyverse package.
+The %>% operator allows us to pipe the output of one function to the next function.
+
+```{r}
+colData(pe)$celltype <- substr(
+  colnames(pe[["peptideRaw"]]),
+  11,
+  14) %>%
+  unlist %>%  
+  as.factor
+
+colData(pe)$mouse <- pe[[1]] %>%
+  colnames %>%
+  strsplit(split="[.]")  %>%
+  sapply(function(x) x[3]) %>%
+  as.factor
+```
+
+
+We calculate how many non zero intensities we have per peptide and this
+will be useful for filtering.
+
+```{r}
+rowData(pe[["peptideRaw"]])$nNonZero <- rowSums(assay(pe[["peptideRaw"]]) > 0)
+```
+
+
+Peptides with zero intensities are missing peptides and should be represent
+with a `NA` value rather than `0`.
+```{r}
+pe <- zeroIsNA(pe, "peptideRaw") # convert 0 to NA
+```
+
+
+## Data exploration
+
+We can inspect the missingness in our data with the `plotNA()` function
+provided with `MSnbase`.
+`r format(mean(is.na(assay(pe[["peptideRaw"]])))*100,digits=2)`% of all peptide
+intensities are missing and for some peptides we do not even measure a signal
+in any sample. The missingness is similar across samples.
+
+
+```{r}
+MSnbase::plotNA(assay(pe[["peptideRaw"]])) +
+  xlab("Peptide index (ordered by data completeness)")
+```
+
+# Preprocessing
+
+This section preforms standard preprocessing for the peptide data. This
+include log transformation, filtering and summarisation of the data.
+
+## Log transform the data
+
+```{r}
+pe <- logTransform(pe, base = 2, i = "peptideRaw", name = "peptideLog")
+limma::plotDensities(assay(pe[["peptideLog"]]))
+```
+
+
+## Filtering
+
+### Handling overlapping protein groups
+In our approach a peptide can map to multiple proteins, as long as there is
+none of these proteins present in a smaller subgroup.
+
+```{r}
+pe[["peptideLog"]] <-
+ pe[["peptideLog"]][rowData(pe[["peptideLog"]])$Proteins
+ %in% smallestUniqueGroups(rowData(pe[["peptideLog"]])$Proteins),]
+```
+
+### Remove reverse sequences (decoys) and contaminants
+
+We now remove the contaminants, peptides that map to decoy sequences, and proteins
+which were only identified by peptides with modifications.
+
+```{r}
+pe[["peptideLog"]] <- pe[["peptideLog"]][rowData(pe[["peptideLog"]])$Reverse != "+", ]
+pe[["peptideLog"]] <- pe[["peptideLog"]][rowData(pe[["peptideLog"]])$
+Potential.contaminant != "+", ]
+```
+
+### Remove peptides of proteins that were only identified with modified peptides
+
+I will skip this step for the moment. Large protein groups file needed for this.
+
+### Drop peptides that were only identified in one sample
+
+We keep peptides that were observed at last twice.
+
+```{r}
+pe[["peptideLog"]] <- pe[["peptideLog"]][rowData(pe[["peptideLog"]])$nNonZero >= 2, ]
+nrow(pe[["peptideLog"]])
+```
+
+We keep `r nrow(pe[["peptideLog"]])` peptides after filtering.
+
+## Quantile normalize the data
+```{r}
+pe <- normalize(pe, i = "peptideLog", method = "quantiles", name = "peptideNorm")
+```
+
+
+## Explore quantile normalized data
+
+After quantile normalisation the density curves for all samples coincide.
+
+```{r}
+limma::plotDensities(assay(pe[["peptideNorm"]]))
+```
+
+This is more clearly seen is a boxplot.
+
+```{r,}
+boxplot(assay(pe[["peptideNorm"]]), col = palette()[-1],
+       main = "Peptide distribtutions after normalisation", ylab = "intensity")
+```
+
+
+We can visualize our data using a Multi Dimensional Scaling plot,
+eg. as provided by the `limma` package.
+
+```{r}
+limma::plotMDS(assay(pe[["peptideNorm"]]), col = as.numeric(colData(pe)$celltype))
+```
+
+The first axis in the plot is showing the leading log fold changes
+(differences on the log scale) between the samples.
+
+
+## Summarization to protein level
+
+We use robust summarization in aggregateFeatures. This is the default workflow of aggregateFeatures so you do not have to specifiy the argument `fun`.
+However, because we compare methods we have included the `fun` argument to show the summarization method explicitely.
+
+```{r,warning=FALSE}
+pe <- aggregateFeatures(pe,
+ i = "peptideNorm",
+ fcol = "Proteins",
+ na.rm = TRUE,
+ name = "proteinRobust",
+ fun = MsCoreUtils::robustSummary)
+```
+
+```{r}
+plotMDS(assay(pe[["proteinRobust"]]), col = as.numeric(colData(pe)$celltype))
+```
+
+# Data Analysis
+
+## Estimation
+
+We model the protein level expression values using `msqrob`.
+By default `msqrob2` estimates the model parameters using robust regression.  
+
+```{r, warning=FALSE}
+pe <- msqrob(
+  object = pe,
+  i = "proteinRobust",
+  formula = ~ celltype + mouse)
+```
+
+## Inference
+
+First, we extract the parameter names of the model.
+```{r}
+getCoef(rowData(pe[["proteinRobust"]])$msqrobModels[[1]])
+```
+
+Spike-in celltype a is the reference class. So the mean log2 expression
+for samples from celltype a is '(Intercept).
+The mean log2 expression for samples from celltype B is '(Intercept)+celltypeTreg'.
+Hence, the average log2 fold change between celltype b and
+celltype a is modelled using the parameter 'celltypeTreg'.
+Thus, we assess the contrast 'celltypeTreg=0' with our statistical test.
+
+```{r}
+L <- makeContrast("celltypeTreg=0", parameterNames = c("celltypeTreg"))
+pe <- hypothesisTest(object = pe, i = "proteinRobust", contrast = L)
+```
+
+## Plots
+
+### Volcano-plot
+
+
+```{r,warning=FALSE}
+volcano <- ggplot(rowData(pe[["proteinRobust"]])$celltypeTreg,
+                 aes(x = logFC, y = -log10(pval), color = adjPval < 0.05)) +
+ geom_point(cex = 2.5) +
+ scale_color_manual(values = alpha(c("black", "red"), 0.5)) + theme_minimal()
+volcano
+```
+
+
+### Heatmap
+
+We first select the names of the proteins that were declared signficant.
+
+```{r}
+sigNames <- rowData(pe[["proteinRobust"]])$celltypeTreg %>%
+ rownames_to_column("proteinRobust") %>%
+ filter(adjPval<0.05) %>%
+ pull(proteinRobust)
+heatmap(assay(pe[["proteinRobust"]])[sigNames, ])
+```
+
+There are `r length(sigNames)` proteins significantly differentially expressed at the 5% FDR level.
+
+```{r}
+rowData(pe[["proteinRobust"]])$celltypeTreg %>%
+  filter(adjPval<0.05)
+```
+
+
+
+### Detail plots
+
+```{r, warning=FALSE, message=FALSE}
+for (protName in sigNames[1:5])
+{
+pePlot <- pe[protName, , c("peptideNorm","proteinRobust")]
+pePlotDf <- data.frame(longFormat(pePlot))
+pePlotDf$assay <- factor(pePlotDf$assay,
+                       levels = c("peptideNorm", "proteinRobust"))
+pePlotDf$celltype <- as.factor(colData(pePlot)[pePlotDf$colname, "celltype"])
+
+# plotting
+p1 <- ggplot(data = pePlotDf,
+      aes(x = colname, y = value, group = rowname)) +
+   geom_line() + geom_point() +  theme_minimal() +
+   facet_grid(~assay) + ggtitle(protName)
+print(p1)
+
+# plotting 2
+p2 <- ggplot(pePlotDf, aes(x = colname, y = value, fill = celltype)) +
+ geom_boxplot(outlier.shape = NA) + geom_point(position = position_jitter(width = .1),
+                                               aes(shape = rowname)) +
+ scale_shape_manual(values = 1:nrow(pePlotDf)) +
+ labs(title = protName, x = "sample", y = "peptide intensity (log2)") + theme_minimal()
+ facet_grid(~assay)
+print(p2)
+}
+```
