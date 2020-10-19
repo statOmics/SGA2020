@@ -65,7 +65,6 @@ A primer to R and Data visualisation  in R can be found in:
   - [Extensive Background on proteomics and proteomics data analysis](assets/backgroundProteomicsDataAnalysis.pdf)
 
 6. Solutions
-
   - [cptac median](assets/cptac_median.html)
   - [cptac robust](assets/cptac.html)
   - [cptac maxLFQ](assets/cptac_maxLfQ.html)
