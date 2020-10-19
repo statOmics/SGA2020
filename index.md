@@ -53,9 +53,7 @@ A primer to R and Data visualisation  in R can be found in:
  - Install Software: [Installation instructions msqrob2](pages/installMsqrob2.md)
  - Slides: [Preprocessing](assets/2_MSqRob_data_analysisI.pdf)
  - Tutorial: [preprocessing](pages/sdaMsqrobSimple.md)
-    - [cptac median](assets/cptac_median.html)
-    - [cptac robust](assets/cptac.html)
-    - [cptac maxLFQ](assets/cptac_maxLfQ.html)
+
 
  4. Statistical Inference & Analysis of Experiments with Factorial Designs
  - Slides: [Inference](assets/2_MSqRob_data_analysisII.pdf)
@@ -65,6 +63,15 @@ A primer to R and Data visualisation  in R can be found in:
   - [Sticker et al. (2020) Robust summarization and inference in proteome-wide label-free quantification](https://www.biorxiv.org/content/10.1101/668863v1)
   - [Robust Regression Implementation](assets/rmarkdownExamples/robustRegression.html)
   - [Extensive Background on proteomics and proteomics data analysis](assets/backgroundProteomicsDataAnalysis.pdf)
+
+6. Solutions
+
+  - [cptac median](assets/cptac_median.html)
+  - [cptac robust](assets/cptac.html)
+  - [cptac maxLFQ](assets/cptac_maxLfQ.html)
+  - [cancer 3 vs 3](assets/cancer2_3x3.html)
+  - [cancer 6 vs 6](assets/cancer2_6x6.html)
+  - [cancer 9 vs 9](assets/cancer2_9x9.html)
 
 ---
 
