@@ -1,0 +1,522 @@
+---
+title: Technical details on linear regression for proteomics
+subtitle: Statistical Genomics
+author: Lieven Clement
+date:
+fontsize: 10pt
+output:
+  beamer_presentation:
+#    keep_tex: true
+#    toc: true
+    fig_caption: false
+
+    includes:
+      in_header: header2.tex
+---
+
+## 1. Linear Regression
+
+\begin{itemize}
+\item Consider a vector of predictors $\mb{x}=(x_1,\ldots,x_{p-1})$ and
+\item a real-valued response $Y$
+\item then the linear regression model can be written as
+\[
+Y=f(\mb{x}) +\epsilon=\beta_0+\sum\limits_{j=1}^{p-1} x_j\beta + \epsilon
+\]
+with i.i.d. $\epsilon\sim N(0,\sigma^2)$
+\end{itemize}
+
+```{r,echo=FALSE}
+library(tidyverse)
+```
+
+---
+
+\begin{itemize}
+\item $n$ observations $(\mb{x}_1,y_1) \ldots (\mb{x}_n,y_n)$
+\item Regression in matrix notation
+\[\mb{Y}=\mb{X\beta} + \mb{\epsilon}\]
+with $\mb{Y}=\left[\begin{array}{c}y_1\\ \vdots\\y_n\end{array}\right]$,
+$\mb{X}=\left[\begin{array}{cccc} 1&x_{11}&\ldots&x_{1p-1}\\
+\vdots&\vdots&&\vdots\\
+1&x_{n1}&\ldots&x_{np-1}
+\end{array}\right]$,
+$\mb{\beta}=\left[\begin{array}{c}\beta_0\\ \vdots\\ \beta_{p-1}\end{array}\right]$ and
+$\mb{\epsilon}=\left[\begin{array}{c} \epsilon_1 \\ \vdots \\ \epsilon_n\end{array}\right]$
+\end{itemize}
+
+---
+
+## 1.1 Least Squares (LS)
+
+\begin{itemize}
+\item Minimize the residual sum of squares
+\begin{eqnarray*}
+RSS(\mb{\beta})&=&\sum\limits_{i=1}^n e^2_i\\
+&=&\sum\limits_{i=1}^n \left(y_i-\beta_0-\sum\limits_{j=1}^p x_{ij}\beta_j\right)^2
+\end{eqnarray*}
+\item or in matrix notation
+\begin{eqnarray*}
+RSS(\mb{\beta})&=&(\mb{Y}-\mb{X\beta})^T(\mb{Y}-\mb{X\beta})\\
+&=&\Vert \mb{Y}-\mb{X\beta}\Vert^2
+\end{eqnarray*}
+with the $L_2$-norm of a $p$-dim. vector $v$ $\Vert \mb{v} \Vert=\sqrt{v_1^2+\ldots+v_p^2}$
+\item[$\rightarrow$] \alert{$\hat{\mb{\beta}}=\text{argmin}_\beta \Vert \mb{Y}-\mb{X\beta}\Vert^2$}
+
+\end{itemize}
+
+---
+
+### Minimize RSS
+\[
+\begin{array}{ccc}
+\frac{\partial RSS}{\partial \mb{\beta}}&=&\mb{0}\\\\
+\frac{(\mb{Y}-\mb{X\beta})^T(\mb{Y}-\mb{X\beta})}{\partial \mb{\beta}}&=&\mb{0}\\\\
+-2\mb{X}^T(\mb{Y}-\mb{X\beta})&=&\mb{0}\\\\
+\mb{X}^T\mb{X\beta}&=&\mb{X}^T\mb{Y}\\\\
+\hat{\mb{\beta}}&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T\mb{Y}
+\end{array}
+\]
+
+---
+
+```{r}
+data<-readRDS("heartProtQ92736.rds")
+fit <- lm(exprs~location+patient,data,x=TRUE)
+
+head(fit$x,4)
+```
+
+---
+
+The model matrix can also be obtained without fitting the model:
+
+```{r}
+X<-model.matrix(~location+patient,data)
+head(X,4)
+
+```
+
+---
+
+```{r}
+
+fit$coefficient
+sigma(fit)
+```
+
+---
+
+### Variance Estimator?
+\[
+\begin{array}{ccl}
+\hat{\boldmath{\Sigma}}_{\hat{\mb{\beta}}}
+&=&\text{var}\left[(\mb{X}^T\mb{X})^{-1}\mb{X}^T\mb{Y}\right]\\\\
+&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T\text{var}\left[\mb{Y}\right]\mb{X}(\mb{X}^T\mb{X})^{-1}\\\\
+&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T(\mb{I}\sigma^2)\mb{X}(\mb{X}^T\mb{X})^{-1}
+\\\\
+&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T\mb{I}\quad\mb{X}(\mb{X}^T\mb{X})^{-1}\sigma^2\\\\
+%\hat{\boldmath{\Sigma}}_{\hat{\mb{\beta}}}&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T\var\left[\mb{Y}\right](\mb{X}^T\mb{X})^{-1}\mb{X}\\
+&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T\mb{X}(\mb{X}^T\mb{X})^{-1}\sigma^2\\\\
+&=&(\mb{X}^T\mb{X})^{-1}\sigma^2
+\end{array}
+\]
+
+---
+
+## 1.2 Contrasts
+
+When we assess a contrast we assess a linear combination of model parameters:
+
+\[ H_0: \mb{L^T\beta} = 0 \text{ vs } H_1: \mb{L^T\beta} \neq 0 \]
+
+Estimator of Contrast?
+
+\[\mb{L}^T\hat{\mb{\beta}}\]
+
+
+Variance?
+
+\[
+\boldsymbol{\Sigma}_{\mb{L}\hat{\boldsymbol{\beta}}}=\mb{L}^T\boldsymbol{\Sigma}_{\hat{\boldsymbol{\beta}}}\mb{L}
+\]
+
+---
+
+## 1.3 Inference
+ \begin{itemize}
+
+ \item When the assumptions of the linear model hold
+\[
+\hat{\mb{\beta}} \sim MVN\left[\mb{\beta},\left(\mb{X}^T\mb{X}\right)^{-1}\sigma^2\right]
+\]
+\item Hence,
+\[
+\mb{L}^T\hat{\mb{\beta}} \sim MVN\left[\mb{L}^T\mb{\beta},\mb{L}^T\left[\left(\mb{X}^T\mb{X}\right)^{-1}\sigma^2\right]\mb{L}\right]
+\]
+\item We estimate $\sigma^2$ by MSE
+$$\hat{\sigma}^2=\frac{\mb{e}^T\mb{e}}{n-p} \rightarrow \hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}=\left(\mb{X}^T\mb{X}\right)^{-1}\hat\sigma^2$$
+\item Statistic
+$$\mb{F}=\hat{\mb{\beta}}^T\mb{L}\left(\mb{L}^T\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{L}\right)^{-1}\mb{L}^T\hat{\mb{\beta}} \underset{H_0}{\sim} F_{r,n-p}$$
+follows an F distribution with r and n-p degrees of freedom under $H_0: \mb{L}^T\hat{\mb{\beta}}=\mb{0}$
+\item Note, that r equals the number of contrasts or the rank of the contrast matrix
+\end{itemize}
+
+---
+
+When we test one contrast at the time (e.g. the $k^\text{th}$ contrast) the statistic reduces to
+
+
+$$T=\frac{\mb{L}_k^T\hat{\boldsymbol{\beta}}}{\sqrt{\left(\mb{L}^T_k\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{L}_k\right)}} \underset{H_0}{\sim} t_{n-p}$$
+follows a t distribution with n-p degrees of freedom under $H_0: \mb{L}^T_k\hat{\boldsymbol{\beta}}=0$
+
+---
+
+```{r}
+summary(fit)
+```
+
+---
+
+```{r}
+library(multcomp)
+L<-matrix(0,nrow=length(fit$coefficient),ncol=2)
+rownames(L)<-names(fit$coefficient)
+L[2,1]<-1
+L[3:4,2]<-c(-1,1)
+L
+```
+
+---
+
+```{r}
+fit %>% glht(linfct=t(L)) %>% summary
+```
+
+---
+
+# 2. Robust regression
+
+- No normality assumption needed
+- Robust fit minimises the maximal bias of the estimators
+- CI and statistical tests are based on asymptotic theory
+- If $\epsilon$ is normal, the M-estimators have a high efficiency!
+- ordinary least squares (OLS): minimize loss function \[\sum\limits_{i=1}^n (y_i-\mb{x}_i^T\mb{\beta})^2\]
+
+- M-estimation: minimize loss function
+\[\sum\limits_{i=1}^n  \rho\left(y_i-\mb{x}_i^T\mb{\beta}\right)\]
+with
+
+  - $\rho$ is symmetric, i.e. $\rho(z)=\rho(-z)$
+  - $\rho$ has a minimum at $\rho(0)=0$, is positive for all $z\neq 0$
+  - $\rho(z)$ increases as $\vert z\vert$ increases
+
+---
+
+ The estimator $\hat{\mu}$ is also the solution to the equation
+ \[
+   \sum_{i=1}^n \Psi(y_i - \mb{x}_i\mb{\beta}) =0,
+ \]
+ where $\Psi$ is the derivative of $\rho$. For $\hat{\beta}$ possessing the robustness property, $\Psi$ should be bounded.
+ \vfill
+ Example: least squares
+
+ $\rho(z) = z^2$, and thus $\Psi(z)=2z$ (unbounded!). $\hat{\mb{\beta}}$ is the solution of
+ \[
+   \sum_{i=1}^n 2 \mb{x}_i (y_i - \mb{x}_i^T\mb{\beta}) = 0 \text{ or } \hat{\mb{\beta}} = (\mb{X}^T\mb{X})^{-1}\mb{X}\mb{y}
+ \]
+ with $\mb{X}=[\mb{x}_1 \ldots \mb{x}_G]^T$
+
+---
+
+ When a location and a scale parameter, say $\sigma$, have to be estimated simultaneously, we write
+ \[
+   (\hat{\mb{\beta}},\hat{\sigma}) = \text{ArgMin}_{\mb{\beta},\sigma} \sum_{i=1}^n \rho\left(\frac{y_i - \mb{x}_i^T\mb{\beta}}{\sigma}\right)
+   \text{ and } \sum_{i=1}^n \Psi\left(\frac{y_i - \mb{x}_i^T\mb{\beta}}{\sigma}\right) =0.
+ \]
+
+ Define $u_i = \frac{y_i - \mb{x}_i^T\mb{\beta}}{\sigma}$. The last estimation equation is equivalent to
+ \[
+   \sum_{i=1}^n w(u_i) u_i = 0 ,
+ \]
+ with weight function $w(u)=\Psi(u)/u$. This is the typical form that appears when solving the
+ *iteratively reweighted least squares problem*,
+ \[
+   (\hat{\mb{\beta}},\hat{\sigma}) = \text{ArgMin}_{\mu,\sigma} \sum_{i=1}^n w(u_i^{(k-1)}) \left(u_i^{(k)}\right)^2 ,
+ \]
+ where $k$ represents the iteration number.
+
+---
+
+### Some Examples of Robust Functions
+ \begin{center}
+   \includegraphics[height=5cm]{TableRobust.png}
+ \end{center}   
+ \tiny \hfill PhD thesis Bolstad 2004
+
+---
+
+### The $\rho$ functions
+ \begin{center}
+   \includegraphics[height=6cm]{RhoRobust.png}
+ \end{center}   
+  \tiny \hfill PhD thesis Bolstad 2004
+
+---
+
+### Common $\Psi$-Functions
+\begin{center}\includegraphics[width=.7\textwidth]{robustRegressionPsi.pdf}\end{center}
+ \tiny \hfill PhD thesis Bolstad 2004
+
+---
+
+### Corresponding Weight Functions
+\begin{center}\includegraphics[width=.7\textwidth]{robustRegressionWeights.pdf}\end{center}
+ \tiny \hfill PhD thesis Bolstad 2004
+
+---
+
+\tiny
+```{r out.width='80%', fig.asp=.8}
+library("MASS")
+rfit <- rlm(exprs~location+patient,data,maxit=500)
+plot(fit$coefficient[-1],rfit$coefficient[-1],xlab="fit",ylab="robust fit",cex.axis=1.5,cex.lab=1.5)
+abline(0,1)
+```
+
+---
+
+\tiny
+
+```{r out.width='80%', fig.asp=.8}
+rfit$w
+plot(rfit$fitted,rfit$res,cex=rfit$w,pch=19,col=2,cex.lab=1.5,cex.axis=1.5,ylab="residuals",xlab="fit")
+points(rfit$fitted,rfit$res)
+```
+
+---
+
+```{r}
+summary(fit)
+```
+
+---
+
+```{r}
+summary(rfit)
+```
+
+---
+
+### Illustration of implementation of robust regression:
+
+https://statomics.github.io/SGA2020/assets/rmarkdownExamples/robustRegression.html
+
+---
+
+## 3. Empirical Bayes/Moderated $t$-test.
+
+ A general class of moderated test statistics is given by
+ \[
+   T_g^{mod} = \frac{\bar{Y}_{g1} - \bar{Y}_{g2}}{c \tilde{S}_g} ,
+ \]
+ where $\tilde{S}_g$ is a moderated variance estimate.
+
+Simple approach: set $\tilde{S}_g=S_g+S_0/c$: simply add a small positive constant to the denominator of the t-statistic
+
+\textbf{empirical Bayes} theory provides formal framework for borrowing strength across genes,
+e.g. popular bioconductor package \textbf{limma}
+\[\tilde{S}_g=\sqrt{\frac{d_gS_g^2+d_0S_0^2}{d_g+d_0}},\]
+and the moderated t-statistic is t-distributed with $d_0+d_g$ degrees of freedom. Note that the degrees of freedom increase by borrowing strenght across genes.
+
+---
+
+### Intermezzo: Bayesian Methods
+
+\begin{itemize}
+\item Frequentists consider data as random and population parameters as fixed but unknown
+\item In Bayesian viewpoint a person has prior beliefs about the population parameters and the uncertainty on this prior beliefs are represented by a probability distribution placed on this parameter. This distribution reflects the person's subjective prior opinion about plausible values of the parameter. And is referred to as the prior $g(\mb{\theta})$.
+\item Bayesian thinking will update the prior information on the population parameters by confronting the model to data ($\mb{Y}$).
+\item By using Bayes Theorem this results in a posterior distribution on the model parameters.  
+\end{itemize}
+\[
+g(\mb{\theta}\vert\mb{Y})=\frac{g(\mb{\theta})f(Y\vert \mb{\theta})}{\int g(\mb{\theta})f(Y\vert \mb{\theta}) d\mb{\theta}} \text{     }\left(\text{ posterior}=\frac{\text{prior} \times \text{ likelihood}}{\text{Marginal distribution}}\right)
+\]
+
+---
+
+### Limma  approach
+
+\begin{tabular}{cc}
+&$P\{\beta_{gk}\neq0\}=p_k$\\\\
+Prior&$\beta_{gk}\vert \sigma^2_g,\beta_{gk}\neq 0 \sim N(0,v_{0k}\sigma_g^2)$\\\\
+&$\frac{1}{\sigma^2_g}\sim s^2_0\frac{\chi^2_{d_0}}{d_0}$\\\\
+&$\hat \beta_{gk} | \beta_{gk} , \sigma_g^2 \sim N( \beta_{gk} , v_{gk}\sigma_g^2)$\\
+Distributional assumptions\\
+&$s_g^2\sim \sigma^2_g\frac{\chi^2_{d_g}}{d_g}$\\\\
+\end{tabular}
+
+---
+
+### Limma  approach
+
+Under this assumption, it can be shown
+\begin{itemize}
+\item Posterior Mean for inverse of the variance parameter: \[\text{E}\left[\frac{1}{\sigma^2_g}\vert S_g^2\right]=\frac{d_0+d_g}{d_0 s_0^2+d_gs_g^2}\] and
+\item $\tilde t=\frac{\hat \beta_{gk}}{\tilde s_{g}\sqrt{v_{gj}}}$ is
+\[\tilde{t}\vert \beta_{gk}=0 \sim t_{d_0+d_g}\]
+with $\tilde  s_{g}=\sqrt{\frac{d_0s^2_0+d_gs^2_g}{d_0+d_g}}$
+\end{itemize}
+
+---
+
+### Empirical Bayes
+\begin{itemize}
+\item A fully Bayesian would define the prior distribution by carefully choosing the prior parameters
+\item In an empirical Bayesian approach one estimates the prior parameters based on the data.
+\item In \alert{Limma} moment estimators for $s_0$ and $d_0$ are derived using the information on the gene (protein) wise variances of all genes (proteins).
+\end{itemize}
+
+---
+
+## 4. Penalized regression: ridge
+
+1. Ridge penalty
+
+2. Parameter estimation of ridge regression
+
+3. Link between ridge regression and mixed models
+
+---
+
+### 4.1. Ridge Penalty
+\begin{columns}
+\begin{column}{.3\textwidth}
+\includegraphics[width=\textwidth]{ridgePen}\\
+\tiny Hastie et al. 2008
+\end{column}
+\begin{column}{.7\textwidth}
+\begin{itemize}
+\item Add a ridge penalty
+\[\hat{\beta}=\text{argmin}_\beta\left\{\Vert \mb{Y}-\mb{X\beta}\Vert^2+ \alert {\lambda \Vert\mb{\beta}\Vert^2}\right\}
+\]
+\item $\lambda$: penalty parameter that controls the amount of penalisation
+\item[]
+\item<2> Equivalent to
+\[\hat{\beta}=\text{argmin}_\beta\Vert \mb{Y}-\mb{X\beta}\Vert^2 \text{ subject to } \alert{\Vert \mb{\beta}\Vert^2\leq s}
+\]
+\item<2> Note, that $s$ has a one-to-one correspondence with $\lambda$
+\end{itemize}
+\end{column}
+\end{columns}
+
+---
+
+### 4.2. Closed form solution
+\[\hat{\mb{\beta}}^\text{ridge}=\text{argmin}_{\mb{\beta}}\left\{
+\Vert \mb{Y}-\mb{X\beta}\Vert^2+\lambda\Vert \mb{\beta}\Vert^2\right\}\]
+Matrix form
+\begin{itemize}
+\item Let $\mb{D}=\left[\begin{array}{cc}0&\mb{0}_{1\times p}\\ \mb{0}_{p\times 1}&\mb{I}_{p\times p}\end{array}\right]$, which
+allows the criterion to be written in matrix form and to leave the intercept $\beta_0$ unpenalized.
+\end{itemize}
+\[\hat{\mb{\beta}}^\text{ridge}=\text{argmin}_{\mb{\beta}} \left\{\Vert\mb{Y}-\mb{X\beta}\Vert^2 + \lambda \mb{\beta}^T\mb{D\beta}\right\}\]
+Minimization:
+\[
+\frac{d  \left\{\Vert\mb{Y}-\mb{X\beta}\Vert^2 + \lambda \mb{\beta}^T\mb{D\beta}\right\}}{d \mb{\beta}}=0\]
+
+---
+
+\begin{eqnarray*}
+\Leftrightarrow
+-\mb{X^TY}+\mb{X}^T\mb{X\beta}+\lambda\mb{D\beta}=0\\\\
+\Leftrightarrow  (\mb{X}^T\mb{X}+\lambda\mb{D})\mb{\beta}=\mb{X}^T\mb{Y}\\\\
+\Leftrightarrow \hat{\mb{\beta}}= (\mb{X}^T\mb{X}+\lambda\mb{D})^{-1}\mb{X}^T\mb{Y}
+\end{eqnarray*}
+
+---
+
+```{r fig.show="hide"}
+library(glmnet)
+ridgeFit<-glmnet(fit$x[,-1],data$exprs,family="gaussian", alpha=0)
+plot(ridgeFit,xvar="lambda")
+legend("bottomright",legend=colnames(fit$x)[-1],col=1:5,lty=1,cex=.5)
+```
+
+---
+
+```{r echo=FALSE}
+library(glmnet)
+data <- readRDS("heartProtQ92736.rds")
+fit <- lm(exprs~location+patient,data,x=TRUE)
+ridgeFit <- glmnet(fit$x[,-1],data$exprs,family="gaussian", alpha=0)
+plot(ridgeFit,xvar="lambda",cex.axis=1.5,cex.main=1.5,cex.lab=1.5,lwd=2)
+legend("bottomright",legend=colnames(fit$x)[-1],col=1:5,lty=1,cex=1.5,lwd=2)
+```
+
+---
+
+### 4.3 Tune ridge penalties
+
+Tune the ridge penalties by exploiting the link between ridge regression and Mixed Models:
+\[
+y_{i}=\mb{X}_i^T\mb{\beta}+\epsilon_{i}
+\]
+with
+\begin{itemize}
+\item $\beta_j\sim N\left(0, \frac{\sigma^2}{\lambda }\right)$
+\item $\epsilon_{i} \sim N\left(0,\sigma^2\right)$
+\item Variance components can be estimated using lme4 mixed model software and the predictions of the random effects $\mb{\beta}_{j}$ coincide with solution of ridge estimator.
+\end{itemize}
+
+---
+
+### Best linear unbiased predictor: BLUP
+Optimize the joint log-likelihood $L(\mb{Y},\mb{\beta})$ towards $\mb{\beta}$
+\[ L(\mb{Y},\alert{\mb{\beta}}) = \prod\limits_{i=1}^n    f(y_{i} \vert \mb{\beta}) \alert{f(\mb{\beta})}\]
+\onslide<2>
+\begin{multline*}
+-2 l(\mb{Y},\alert{\mb{\beta}})\varpropto n\log(\sigma^2)+
+\frac{(\mb{Y}-\mb{X\beta})^T(\mb{Y}-\mb{X\beta})}{\sigma^2} + \\
+\alert{p \log \frac{ \sigma^2}{\lambda} + \frac{\lambda}{\sigma^2} \mb{\beta}^T\mb{\beta}}
+\end{multline*}
+
+\begin{eqnarray*}
+\hat{\mb{\beta}}&=&\text{argmin}_\beta \left\{ l(\mb{Y},\alert{\mb{\beta}})\right\}
+\\
+&=& \text{argmin}_\beta \left\{ \vert\vert\mb{Y}-\mb{\beta}\vert\vert^2_2 + \lambda \mb{\beta}^T\mb{\beta} \right\}
+\end{eqnarray*}
+
+---
+
+```{r}
+library(lme4)
+ridgeFit<-lmer(exprs~(1|location)+(1|patient),data)
+summary(ridgeFit)
+```
+
+---
+
+```{r}
+ranef(ridgeFit)
+```
+
+---
+
+```{r}
+LG<-matrix(0,nrow=length(fit$coefficient),ncol=4)
+rownames(LG)<-names(fit$coefficient)
+LG[1,1]<-1
+LG[c(1,2),2]<-1
+LG[c(1,3),3]<-1
+LG[c(1,4),4]<-1
+sd(unlist(fit$coef%*%LG))
+sd(unlist(fixef(ridgeFit)+ranef(ridgeFit)$location))
+```
+
+---
+
+```{r}
+plot(unlist(fit$coef%*%LG),unlist(fixef(ridgeFit)+ranef(ridgeFit)$location),cex.axis=1.5,cex.lab=1.5,ylab="ridge",xlab="ols")
+abline(0,1)
+```

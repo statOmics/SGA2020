@@ -1,0 +1,66 @@
+\graphicspath{{\string~/Dropbox/figs/}}
+\usepackage{rotating}
+\usepackage{/Users/lclement/Dropbox/BeamerColor}
+\setbeamercolor{structure}{fg=OliveDrab}
+\setbeamercolor{alerted text}{use=structure,fg=structure.fg}
+\usepackage[dutch]{babel}
+\usepackage{amsmath}
+\beamertemplateballitem
+\beamertemplatenumberedballsectiontoc
+\institute[UGent]{Universiteit Gent}
+
+\author[Lieven Clement] % (optional, use only with lots of authors)
+{\small Lieven Clement\vspace*{.2cm}}
+% - Use the \inst{?} command only if the authors have different
+%   affiliation.
+\newcommand{\conference}
+{\text{statOmics, Ghent University}} %bottom-left on all slides except on title slide
+\newcommand{\authorshort}
+{\text{lieven.clement@ugent.be}} %bottom-right on all slides except on title slide
+\newcommand{\email}
+{\text{lieven.clement@ugent.be}}
+\newcommand{\logotitlepage} % logo's on title page
+{\includegraphics[width=2cm]{ugentlogo.png}}%{\includegraphics[height=2cm]{logo_Ibiostat.pdf}}
+\newcommand{\logotitlepagetwo} % logo's on title page
+{\includegraphics[width=2cm]{bigN2N.png}}%{\includegraphics[height=2.3cm]{sedes.jpg}}
+%%\newcommand{\logotitlepage2} % logo's on title page
+%%{\includegraphics[height=3cm]{logo_Ibiostat.pdf}}
+\newcommand{\affiltitlepage} %\affiliation on title page
+{statOmics, Ghent University}
+\newcommand{\addresslinetitlepage} % addressline on title page
+{statOmics, Krijgslaan 281 (S9), Gent, Belgium}
+\date{}
+\newcommand\Switch{0}
+\newcommand\SecInHead{%
+  \ifthenelse{\equal{\Switch}{1}}
+    {\thesection.}{}}
+\def\mystrut(#1,#2){\vrule height #1pt depth #2pt width 0pt}
+
+
+
+\usetitlepagetemplate{
+\beamerline{\hspace{1cm}\parbox[l][3cm][c]{0.5\textwidth}{\logotitlepage}
+\parbox[r][3cm][c]{0.5\textwidth}{\flushright\logotitlepagetwo}}
+ \vskip0pt plus 1filll
+
+   \begin{center}
+   \Large{\color{beamerstructure}{\inserttitle}}\\
+   \vspace{0.3cm}
+   \small \insertauthor\\
+   \vspace{0.6cm}
+   \insertsubtitle\\
+   \vspace{0.15cm}
+   \insertdate
+ \end{center}
+ \vskip0pt plus 1filll
+ \addtocounter{framenumber}{-1}
+ }
+
+ \setbeamertemplate{footline}[frame number]
+
+\definecolor{links}{HTML}{2A1B81}
+\hypersetup{colorlinks,linkcolor=,urlcolor=links,linkbordercolor=links,
+  pdfborderstyle={/S/U/W 1}}
+
+  \newcommand{\mb}[1]
+     {\boldsymbol{\mathbf{#1}}}

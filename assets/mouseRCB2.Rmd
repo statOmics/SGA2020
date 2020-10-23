@@ -1,5 +1,5 @@
 ---
-title: "Proteomics data analysis: mouse Tcell example with RCB design and wrong data analysis"
+title: "Proteomics data analysis: mouse Tcell example with RCB design"
 author: "Lieven Clement"
 date: "statOmics, Ghent University (https://statomics.github.io)"
 output:
