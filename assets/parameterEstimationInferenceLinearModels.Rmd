@@ -157,7 +157,7 @@ Variance?
 \item We estimate $\sigma^2$ by MSE
 $$\hat{\sigma}^2=\frac{\mb{e}^T\mb{e}}{n-p} \rightarrow \hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}=\left(\mb{X}^T\mb{X}\right)^{-1}\hat\sigma^2$$
 \item Statistic
-$$\mb{F}=\hat{\mb{\beta}}^T\mb{L}\left(\mb{L}^T\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{L}\right)^{-1}\mb{L}^T\hat{\mb{\beta}} \underset{H_0}{\sim} F_{r,n-p}$$
+$$\mb{F}=\hat{\mb{\beta}}^T\mb{L}\left(\mb{L}^T\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{L}\right)^{-1}\mb{L}^T\hat{\mb{\beta}}/r \underset{H_0}{\sim} F_{r,n-p}$$
 follows an F distribution with r and n-p degrees of freedom under $H_0: \mb{L}^T\hat{\mb{\beta}}=\mb{0}$
 \item Note, that r equals the number of contrasts or the rank of the contrast matrix
 \end{itemize}
