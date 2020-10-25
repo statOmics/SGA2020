@@ -268,9 +268,13 @@ If the matrix \mb{L} is not full rank, but has rank $r < n_c$
 - the inverse of the variance covariance matrix of the contrasts does not exist
 - we can then decompose L in $r$ orthogonal contrasts $\mb{Q}$ with
 \[Q_j^T Q_k^T = \delta_{jk},\]
+
 - $j,k \in 1,\ldots,r$,
+
 - $\delta{jk} = 0$ and if $j\neq k$ $\delta{jk} = 1$
+
 - which can be done using the QR decomposition  
+
 - We can that assess the omnibus null hypothesis using the statistic:
 $$\mb{F}=\hat{\mb{\beta}}^T\mb{Q}_r\left(\mb{Q}^T_r\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{Q}_r\right)^{-1}\mb{Q}^T_r\hat{\mb{\beta}}/r \underset{H_0}{\sim} F_{r,n-p}$$
 
@@ -295,7 +299,13 @@ rownames(Q) <- rownames(L)
 Q
 ```
 
-Assessing the omnibus hypothesis is thus equivalent to assessing if the null hypothesis that
+- Q is orthonormal
+
+```{r}
+t(Q)%*%Q
+```
+
+Exploring Q shows that assessing the omnibus hypothesis is thus equivalent to assessing if the null hypothesis that
 \[H_0: \beta_\text{tissue} = \beta_\text{tissue:location} = 0\]
 
 ```{r}
@@ -374,26 +384,26 @@ with
 
 ## Some Examples of Robust Functions
 
-![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/TableRobust.png)
+![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/TableRobust.PNG)
 PhD thesis Bolstad 2004
 
 ---
 
 ## The $\rho$ functions
 
-![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/RhoRobust.png)
+![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/RhoRobust.PNG)
 PhD thesis Bolstad 2004
 
 ---
 
 ### Common $\Psi$-Functions
-![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/robustRegressionPsi.pdf)
+![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/robustRegressionPsi.png)
 PhD thesis Bolstad 2004
 
 ---
 
 ### Corresponding Weight Functions
-![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/robustRegressionWeights.pdf)
+![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/robustRegressionWeights.png)
 PhD thesis Bolstad 2004
 
 ---
