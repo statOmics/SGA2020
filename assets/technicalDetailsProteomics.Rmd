@@ -1,0 +1,437 @@
+---
+title: "Technical details on linear regression for proteomics"
+author: "Lieven Clement"
+date: "statOmics, Ghent University (https://statomics.github.io)"
+output:
+    html_document:
+      code_download: true
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
+---
+
+# Preamble
+
+Read stored results for heart data
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(limma)
+library(QFeatures)
+library(msqrob2)
+pe <- readRDS("peHeart.rds")
+```
+
+# Linear regression
+
+- Consider a vector of predictors $\mb{x}_i=(x_1,\ldots,x_{p-1})$ and
+- a real-valued response $Y_i$
+- with $i = 1, \ldots, n$
+- then the linear regression model can be written as
+\[
+Y_i=f(\mb{x}) +\epsilon=\beta_0+\sum\limits_{j=1}^{p-1} x_{ij}\beta + \epsilon_i
+\]
+with i.i.d. $\epsilon_i\sim N(0,\sigma^2)$
+
+---
+
+- $n$ observations $(\mb{x}_1,y_1) \ldots (\mb{x}_n,y_n)$
+- Regression in matrix notation
+\[\mb{Y}=\mb{X\beta} + \mb{\epsilon}\]
+with $\mb{Y}=\left[\begin{array}{c}y_1\\ \vdots\\y_n\end{array}\right]$,
+$\mb{X}=\left[\begin{array}{cccc} 1&x_{11}&\ldots&x_{1p-1}\\
+\vdots&\vdots&&\vdots\\
+1&x_{n1}&\ldots&x_{np-1}
+\end{array}\right]$,
+$\mb{\beta}=\left[\begin{array}{c}\beta_0\\ \vdots\\ \beta_{p-1}\end{array}\right]$ and
+$\mb{\epsilon}=\left[\begin{array}{c} \epsilon_1 \\ \vdots \\ \epsilon_n\end{array}\right]$
+
+---
+
+## Least Squares (LS)
+
+- Minimize the residual sum of squares
+\begin{eqnarray*}
+RSS(\mb{\beta})&=&\sum\limits_{i=1}^n e^2_i\\
+&=&\sum\limits_{i=1}^n \left(y_i-\beta_0-\sum\limits_{j=1}^p x_{ij}\beta_j\right)^2
+\end{eqnarray*}
+- or in matrix notation
+\begin{eqnarray*}
+RSS(\mb{\beta})&=&(\mb{Y}-\mb{X\beta})^T(\mb{Y}-\mb{X\beta})\\
+&=&\Vert \mb{Y}-\mb{X\beta}\Vert^2
+\end{eqnarray*}
+with the $L_2$-norm of a $p$-dim. vector $v$ $\Vert \mb{v} \Vert=\sqrt{v_1^2+\ldots+v_p^2}$
+-[$\rightarrow$] $\hat{\mb{\beta}=\text{argmin}_\beta \Vert \mb{Y}-\mb{X\beta}\Vert^2$}
+
+
+---
+
+### Minimize RSS
+\[
+\begin{array}{ccc}
+\frac{\partial RSS}{\partial \mb{\beta}}&=&\mb{0}\\\\
+\frac{(\mb{Y}-\mb{X\beta})^T(\mb{Y}-\mb{X\beta})}{\partial \mb{\beta}}&=&\mb{0}\\\\
+-2\mb{X}^T(\mb{Y}-\mb{X\beta})&=&\mb{0}\\\\
+\mb{X}^T\mb{X\beta}&=&\mb{X}^T\mb{Y}\\\\
+\hat{\mb{\beta}}&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T\mb{Y}
+\end{array}
+\]
+
+---
+
+#### heart example
+
+```{r}
+y <- assay(pe[["proteinRobust"]])[2,]
+fit <- lm(y ~ location*tissue + patient, data = colData(pe), x = TRUE)
+head(fit$x,4)
+```
+
+The model matrix can also be obtained without fitting the model:
+
+```{r}
+X <- model.matrix(~ location * tissue + patient, colData(pe))
+head(X,4)
+```
+
+Least squares:
+```{r}
+betas <- solve(t(X)%*%X) %*% t(X) %*% y
+cbind(fit$coef, betas)
+```
+
+---
+
+### Variance Estimator?
+\[
+\begin{array}{ccl}
+\hat{\boldmath{\Sigma}}_{\hat{\mb{\beta}}}
+&=&\text{var}\left[(\mb{X}^T\mb{X})^{-1}\mb{X}^T\mb{Y}\right]\\\\
+&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T\text{var}\left[\mb{Y}\right]\mb{X}(\mb{X}^T\mb{X})^{-1}\\\\
+&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T(\mb{I}\sigma^2)\mb{X}(\mb{X}^T\mb{X})^{-1}
+\\\\
+&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T\mb{I}\quad\mb{X}(\mb{X}^T\mb{X})^{-1}\sigma^2\\\\
+%\hat{\boldmath{\Sigma}}_{\hat{\mb{\beta}}}&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T\var\left[\mb{Y}\right](\mb{X}^T\mb{X})^{-1}\mb{X}\\
+&=&(\mb{X}^T\mb{X})^{-1}\mb{X}^T\mb{X}(\mb{X}^T\mb{X})^{-1}\sigma^2\\\\
+&=&(\mb{X}^T\mb{X})^{-1}\sigma^2
+\end{array}
+\]
+
+---
+
+#### heart example
+
+
+```{r}
+summary(fit)$cov.unscaled * sigma(fit)^2
+```
+
+```{r}
+n <- nrow(X)
+p <- ncol(X)
+mse <- sum((y-X%*%betas)^2)/(n-p)
+SigmaBeta <- solve(t(X)%*%X) * mse   
+SigmaBeta
+range(SigmaBeta - summary(fit)$cov.unscaled * sigma(fit)^2)
+```
+
+```{r}
+data.frame(summary(fit)$coef[,1:2], betas = betas, seBetas = diag(SigmaBeta)^.5)
+```
+
+## Contrasts
+
+When we assess a contrast we assess a linear combination of model parameters:
+
+\[ H_0: \mb{L^T\beta} = 0 \text{ vs } H_1: \mb{L^T\beta} \neq 0 \]
+
+Estimator of Contrast?
+
+\[\mb{L}^T\hat{\mb{\beta}}\]
+
+
+Variance?
+
+\[
+\boldsymbol{\Sigma}_{\mb{L}\hat{\boldsymbol{\beta}}}=\mb{L}^T\boldsymbol{\Sigma}_{\hat{\boldsymbol{\beta}}}\mb{L}
+\]
+
+---
+
+### heart example
+
+```{r}
+L <- makeContrast(
+  c(
+    "tissueV = 0",
+    "tissueV + locationR:tissueV = 0",
+    "tissueV + 0.5*locationR:tissueV = 0","locationR:tissueV = 0"),
+  parameterNames =
+    rowData(pe[["proteinRobust"]])$msqrobModels[[2]] %>%
+    getCoef %>%
+    names
+  )
+L
+```
+
+```{r}
+contrasts <- t(L) %*% betas
+SigmaContrasts <- t(L) %*% SigmaBeta %*% L
+seContrasts <- SigmaContrasts %>%
+  diag %>%
+  sqrt
+```
+
+Comparison with lm and glht results
+
+```{r}
+library(multcomp)
+fitGlht <- glht(fit, linfct = t(L))
+summary(fitGlht, test = adjusted("none"))
+data.frame(contrasts, seContrasts)
+```
+
+- Note, that the power for assessing $\log_2$ FC between ventriculum and atrium  left and right is the same. Indeed, the standard errors are equal for both effects.
+
+
+- Note, that the power for assessing $\log_2$ FC between ventriculum and atrium over both heart regions is higher than when assessing the effect left or right.
+
+  - Indeed, the standard error is a factor $\sqrt{2}$ smaller for the former effect
+  - We intuitively can explain this because we can use all samples (double the number of samples) to assess the average effect.
+  - Hence the variance is a factor two smaller, and the se with a factor $\sqrt{2}$
+
+- Note, that we have the lowest power to pick up an interaction effect. Indeed, the se is a factor $\sqrt{2}$ smaller than for the effect left or right and a factor 2 smaller than for the average effect between ventriculum and atrium.
+
+```{r}
+seContrasts / seContrasts[1]
+sqrt(2)
+1/sqrt(2)
+```
+
+### t-tests
+
+ - When the assumptions of the linear model hold
+\[
+\hat{\mb{\beta}} \sim MVN\left[\mb{\beta},\left(\mb{X}^T\mb{X}\right)^{-1}\sigma^2\right]
+\]
+- Hence,
+\[
+\mb{L}^T\hat{\mb{\beta}} \sim MVN\left[\mb{L}^T\mb{\beta},\mb{L}^T\left[\left(\mb{X}^T\mb{X}\right)^{-1}\sigma^2\right]\mb{L}\right]
+\]
+- We estimate $\sigma^2$ by MSE
+$$\hat{\sigma}^2=\frac{\mb{e}^T\mb{e}}{n-p} \rightarrow \hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}=\left(\mb{X}^T\mb{X}\right)^{-1}\hat\sigma^2$$
+
+- When we test one contrast at the time (e.g. the $k^\text{th}$ contrast) the statistic reduces to
+
+$$T=\frac{\mb{L}_k^T\hat{\boldsymbol{\beta}}}{\sqrt{\left(\mb{L}^T_k\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{L}_k\right)}} \underset{H_0}{\sim} t_{n-p}$$
+follows a t distribution with n-p degrees of freedom under $H_0: \mb{L}^T_k\hat{\boldsymbol{\beta}}=0$
+
+---
+
+#### heart example
+
+```{r}
+tContrasts <- contrasts/seContrasts
+pContrasts <- pt(abs(tContrasts),
+  df = n - p,
+  lower.tail = FALSE) * 2
+```
+
+Comparison with lm and glht results
+
+```{r}
+summary(fitGlht, test = adjusted("none"))
+data.frame(contrasts, seContrasts, tContrasts, pContrasts)
+```
+
+
+---
+
+### Omnibus test
+
+- We can also assess all contrasts simultaneously with the omnibus null hypothesis:
+\[H_0: $\mb{L}^T\hat{\mb{\beta}}=\mb{0}\]
+
+- Statistic
+$$\mb{F}=\hat{\mb{\beta}}^T\mb{L}\left(\mb{L}^T\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{L}\right)^{-1}\mb{L}^T\hat{\mb{\beta}}/n_c \underset{H_0}{\sim} F_{r,n-p}$$
+follows an F distribution with $n_c$ and n-p degrees of freedom under the omnibus null hypothesis.
+- Note, that $n_c$ equals the number of contrasts, and
+- $\mb{L}$ is assumed to be full rank
+
+---
+
+
+If the matrix \mb{L} is not full rank, but has rank $r < n_c$
+- i.e. some of the contrasts can be written as linear combinations of other contrasts,
+- the inverse of the variance covariance matrix of the contrasts does not exist
+- we can then decompose L in $r$ orthogonal contrasts $\mb{Q}$ with
+\[Q_j^T Q_k^T = \delta_{jk},\]
+- $j,k \in 1,\ldots,r$,
+- $\delta{jk} = 0$ and if $j\neq k$ $\delta{jk} = 1$
+- which can be done using the QR decomposition  
+- We can that assess the omnibus null hypothesis using the statistic:
+$$\mb{F}=\hat{\mb{\beta}}^T\mb{Q}_r\left(\mb{Q}^T_r\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{Q}_r\right)^{-1}\mb{Q}^T_r\hat{\mb{\beta}}/r \underset{H_0}{\sim} F_{r,n-p}$$
+
+---
+
+#### Heart example
+
+```{r}
+try(solve(SigmaContrasts))
+```
+
+- We cannot invert the variance matrix of the contrasts!
+- Indeed, the contrasts are linear combinations of two parameters and the contrast matrix $\mb{L}$ will thus have rank 2
+- We calculate orthogonal contrasts:
+
+```{r}
+qrL <- qr(L)
+r <- qrL$rank
+r
+Q <- qr.Q(qrL)[,1:r]
+rownames(Q) <- rownames(L)
+Q
+```
+
+Assessing the omnibus hypothesis is thus equivalent to assessing if the null hypothesis that
+\[H_0: \beta_\text{tissue} = \beta_\text{tissue:location} = 0\]
+
+```{r}
+est <- t(Q) %*% betas
+SigmaEst <- t(Q) %*% SigmaBeta %*% Q
+Fstat <- t(est) %*% solve(SigmaEst) %*% est / r
+pOmnibus <- pf(Fstat, r, p, lower.tail = FALSE)
+```
+
+- Comparison with lm results
+- We can assess the omnibus hypothesis also by comparing two models
+    - model with location, tissue, location - tissue interaction and patient effect
+    - null model: model with location and patient effect
+
+```{r}
+fit0 <- lm(y ~ location + patient, colData(pe))
+anova(fit, fit0)
+Fstat
+pOmnibus
+```
+
+# Robust regression
+
+- With msqrob2 we perform robust regression to estimate the model parameters of the regression model
+
+- No normality assumption needed
+- Robust fit minimises the maximal bias of the estimators
+- CI and statistical tests are based on asymptotic theory
+- If $\epsilon$ is normal, the M-estimators have a high efficiency!
+- ordinary least squares (OLS): minimize loss function \[\sum\limits_{i=1}^n (y_i-\mb{x}_i^T\mb{\beta})^2\]
+
+- M-estimation: minimize loss function
+\[\sum\limits_{i=1}^n  \rho\left(y_i-\mb{x}_i^T\mb{\beta}\right)\]
+with
+
+  - $\rho$ is symmetric, i.e. $\rho(z)=\rho(-z)$
+  - $\rho$ has a minimum at $\rho(0)=0$, is positive for all $z\neq 0$
+  - $\rho(z)$ increases as $\vert z\vert$ increases
+
+---
+
+ The estimator $\hat{\mu}$ is also the solution to the equation
+ \[
+   \sum_{i=1}^n \Psi(y_i - \mb{x}_i\mb{\beta}) =0,
+ \]
+ where $\Psi$ is the derivative of $\rho$. For $\hat{\beta}$ possessing the robustness property, $\Psi$ should be bounded.
+ \vfill
+ Example: least squares
+
+ $\rho(z) = z^2$, and thus $\Psi(z)=2z$ (unbounded!). $\hat{\mb{\beta}}$ is the solution of
+ \[
+   \sum_{i=1}^n 2 \mb{x}_i (y_i - \mb{x}_i^T\mb{\beta}) = 0 \text{ or } \hat{\mb{\beta}} = (\mb{X}^T\mb{X})^{-1}\mb{X}\mb{y}
+ \]
+ with $\mb{X}=[\mb{x}_1 \ldots \mb{x}_G]^T$
+
+---
+
+ When a location and a scale parameter, say $\sigma$, have to be estimated simultaneously, we write
+ \[
+   (\hat{\mb{\beta}},\hat{\sigma}) = \text{ArgMin}_{\mb{\beta},\sigma} \sum_{i=1}^n \rho\left(\frac{y_i - \mb{x}_i^T\mb{\beta}}{\sigma}\right)
+   \text{ and } \sum_{i=1}^n \Psi\left(\frac{y_i - \mb{x}_i^T\mb{\beta}}{\sigma}\right) =0.
+ \]
+
+ Define $u_i = \frac{y_i - \mb{x}_i^T\mb{\beta}}{\sigma}$. The last estimation equation is equivalent to
+ \[
+   \sum_{i=1}^n w(u_i) u_i = 0 ,
+ \]
+ with weight function $w(u)=\Psi(u)/u$. This is the typical form that appears when solving the
+ *iteratively reweighted least squares problem*,
+ \[
+   (\hat{\mb{\beta}},\hat{\sigma}) = \text{ArgMin}_{\mu,\sigma} \sum_{i=1}^n w(u_i^{(k-1)}) \left(u_i^{(k)}\right)^2 ,
+ \]
+ where $k$ represents the iteration number.
+
+---
+
+## Some Examples of Robust Functions
+
+![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/TableRobust.png)
+PhD thesis Bolstad 2004
+
+---
+
+## The $\rho$ functions
+
+![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/RhoRobust.png)
+PhD thesis Bolstad 2004
+
+---
+
+### Common $\Psi$-Functions
+![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/robustRegressionPsi.pdf)
+PhD thesis Bolstad 2004
+
+---
+
+### Corresponding Weight Functions
+![](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/robustRegressionWeights.pdf)
+PhD thesis Bolstad 2004
+
+---
+
+```{r}
+library("MASS")
+rfit <- rlm(y ~ location * tissue + patient, colData(pe), maxit=1)
+qplot(fit$coefficient[-1],
+  rfit$coefficient[-1],
+  xlab="fit",
+  ylab="robust fit") +
+  geom_abline() +
+  xlim(range(c(fit$coefficient[-1],rfit$coefficient[-1]))) +
+  ylim(range(c(fit$coefficient[-1],rfit$coefficient[-1])))
+```
+
+---
+
+```{r}
+rfit$w
+plot(
+  rfit$fitted,
+  rfit$res,
+  cex=rfit$w,
+  pch=19,col=2,
+  cex.lab=1.5,
+  cex.axis=1.5,
+  ylab="residuals",
+  xlab="fit")
+points(rfit$fitted, rfit$res , cex= 1.5)
+```
+
+---
+
+```{r}
+summary(fit)
+summary(rfit)
+rowData(pe[["proteinRobust"]])$msqrobModels[[2]] %>% getCoef
+```
+
+---

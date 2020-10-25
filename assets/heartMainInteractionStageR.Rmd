@@ -508,16 +508,16 @@ rowData(pe[["proteinRobust"]])$"locationR:tissueV"[2,]
 ```
 
 
-## Stagewise testing
+# Stagewise testing
 
-### Omnibus test
+## Omnibus test
 
 ```{r}
 source("https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/topFeaturesOmnibus.R")
 pe <- omnibusTest(pe, "proteinRobust", L)
 ```
 
-### Heatmap significant proteins Omnibus test
+## Heatmap significant proteins Omnibus test
 
 We first select the names of the proteins that were declared signficant.
 
@@ -540,7 +540,7 @@ rowData(pe[["proteinRobust"]])$omnibusTest  %>%
   knitr::kable(.)
 ```
 
-### Confirmation stage
+## Confirmation stage
 
 
 ```{r}
@@ -616,4 +616,4 @@ Note, that
 - our more relaxed FDR correction enables us to reject more null hypotheses in the second stage.
 - we can recover `r length(sigNamesStageWise[[5]])` proteins with significant interactions.
 
-It is also very important to realise that setting the method to correct for multiple testing in the second stage at `method = none` is only correct for very specific designs and research hypotheses that are assessed. For most analyses we suggest to use the Holm method, which always we provide correct results. 
+It is also very important to realise that setting the method to correct for multiple testing in the second stage at `method = none` is only correct for very specific designs and research hypotheses that are assessed. For most analyses we suggest to use the Holm method, which always we provide correct results.

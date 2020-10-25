@@ -81,8 +81,8 @@ with the $L_2$-norm of a $p$-dim. vector $v$ $\Vert \mb{v} \Vert=\sqrt{v_1^2+\ld
 ---
 
 ```{r}
-data<-readRDS("heartProtQ92736.rds")
-fit <- lm(exprs~location+patient,data,x=TRUE)
+data <- readRDS("heartProtQ92736.rds")
+fit <- lm(exprs ~ location + patient, data, x=TRUE)
 
 head(fit$x,4)
 ```
@@ -92,7 +92,7 @@ head(fit$x,4)
 The model matrix can also be obtained without fitting the model:
 
 ```{r}
-X<-model.matrix(~location+patient,data)
+X <- model.matrix(~location+patient,data)
 head(X,4)
 
 ```
@@ -100,7 +100,6 @@ head(X,4)
 ---
 
 ```{r}
-
 fit$coefficient
 sigma(fit)
 ```
@@ -157,15 +156,32 @@ Variance?
 \item We estimate $\sigma^2$ by MSE
 $$\hat{\sigma}^2=\frac{\mb{e}^T\mb{e}}{n-p} \rightarrow \hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}=\left(\mb{X}^T\mb{X}\right)^{-1}\hat\sigma^2$$
 \item Statistic
-$$\mb{F}=\hat{\mb{\beta}}^T\mb{L}\left(\mb{L}^T\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{L}\right)^{-1}\mb{L}^T\hat{\mb{\beta}}/r \underset{H_0}{\sim} F_{r,n-p}$$
-follows an F distribution with r and n-p degrees of freedom under $H_0: \mb{L}^T\hat{\mb{\beta}}=\mb{0}$
-\item Note, that r equals the number of contrasts or the rank of the contrast matrix
+$$\mb{F}=\hat{\mb{\beta}}^T\mb{L}\left(\mb{L}^T\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{L}\right)^{-1}\mb{L}^T\hat{\mb{\beta}}/n_c \underset{H_0}{\sim} F_{r,n-p}$$
+follows an F distribution with $n_c$ and n-p degrees of freedom under the omnibus null hypothesis
+\[H_0: $\mb{L}^T\hat{\mb{\beta}}=\mb{0}\]
+\item Note, that $n_c$ equals the number of contrasts, and
+\item $\mb{L}$ is assumed to be full rank
+\end{itemize}
+
+---
+
+
+If the matrix \mb{L} is not full rank, but has rank $r < n_c$
+\begin{itemize}
+\item i.e. some of the contrasts can be written as linear combinations of other contrasts,
+\item the inverse of the variance covariance matrix of the contrasts does not exist
+\item we can then decompose L in $r$ orthogonal contrasts $\mb{Q}$ with
+\[Q_j^T Q_k^T = \delta_{jk},\]
+\item $j,k \in 1,\ldots,r$,
+\item $\delta{jk} = 0$ and if $j\neq k$ $\delta{jk} = 1$
+\item which can be done using the QR decomposition  
+\item We can that assess the omnibus null hypothesis using the statistic:
+$$\mb{F}=\hat{\mb{\beta}}^T\mb{Q}_r\left(\mb{Q}^T_r\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{Q}_r\right)^{-1}\mb{Q}^T_r\hat{\mb{\beta}}/r \underset{H_0}{\sim} F_{r,n-p}$$
 \end{itemize}
 
 ---
 
 When we test one contrast at the time (e.g. the $k^\text{th}$ contrast) the statistic reduces to
-
 
 $$T=\frac{\mb{L}_k^T\hat{\boldsymbol{\beta}}}{\sqrt{\left(\mb{L}^T_k\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mb{L}_k\right)}} \underset{H_0}{\sim} t_{n-p}$$
 follows a t distribution with n-p degrees of freedom under $H_0: \mb{L}^T_k\hat{\boldsymbol{\beta}}=0$
@@ -180,8 +196,8 @@ summary(fit)
 
 ```{r}
 library(multcomp)
-L<-matrix(0,nrow=length(fit$coefficient),ncol=2)
-rownames(L)<-names(fit$coefficient)
+L <- matrix(0, nrow=length(fit$coefficient), ncol=2)
+rownames(L) <- names(fit$coefficient)
 L[2,1]<-1
 L[3:4,2]<-c(-1,1)
 L
