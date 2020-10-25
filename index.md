@@ -62,9 +62,8 @@ A primer to R and Data visualisation  in R can be found in:
  5. Reading Material and Technical details
     - Paper: [Sticker et al. (2020) Robust summarization and inference in proteome-wide label-free quantification](https://www.biorxiv.org/content/10.1101/668863v1)
     - part of PhD dissertation: [Extensive Background on proteomics and proteomics data analysis](assets/backgroundProteomicsDataAnalysis.pdf)
-    - Slides: [Inference](assets/parameterEstimationInferenceLinearModels.pdf)
-    - Script: [Robust Regression Implementation](assets/rmarkdownExamples/robustRegression.html)
-    - Script: [simulation: pvalues and empircal bayes](assets/pvalue.html)
+    - [Inference upon summarization](assets/technicalDetailsProteomics.html)
+
 
 6. Stagewise testing: Omnibus test and post hoc analysis: [slides](assets/stagewiseTesting.pdf)
 

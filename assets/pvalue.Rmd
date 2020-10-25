@@ -264,6 +264,13 @@ rowData(pe[["proteinRobust"]])$genotypeD8 %>%
 
 # Empirical Bayes
 
+We borrow strenght accross proteins by
+
+1. placing a scaled inverse $\chi$^2$ prior: $\chi^2(s_o,\text{df}_0)$ on the variances
+2. estimating the prior parameters $s_0$ and $df_0$
+3. replacing the protein-wise variances with the maximum a-posteriori
+
+
 ```{r}
 sd <- sapply(
   rowData(pe[["proteinRobust"]])$msqrobModels,
@@ -274,8 +281,44 @@ sdPost <- sapply(
   getSigmaPosterior) %>%
   na.exclude
 
-qplot(sd,sdPost) +
+p1 <- qplot(sd,sdPost) +
   geom_segment(aes(x=0,y=0,xend=2,yend=2))
+p1
+```
+
+## How do we get to the posterior standard deviation?
+
+```{r}
+hlp <- limma::squeezeVar(
+  var = sapply(rowData(pe[["proteinRobust"]])$msqrobModels, getVar),
+  df = sapply(rowData(pe[["proteinRobust"]])$msqrobModels, getDF)
+  )
+```
+
+### Degrees of freedom of prior
+
+```{r}
+hlp$df.prior
+
+model <- rowData(pe[["proteinRobust"]])$msqrobModels[[2]]
+getDfPosterior(model) - getDF(model)
+```
+
+### posterior variance
+
+$$s_\text{posterior}=\sqrt{\frac{d_p\times S^2_p + d_0 s_0^2}{d_p+d_0}} $$
+
+```{r}
+hlp$var.prior
+
+varPost <- (getVar(model) * getDF(model) + hlp$df.prior * hlp$var.prior)/(getDF(model)+hlp$df.prior)
+sqrt(varPost)
+getSigmaPosterior(model)
+```
+
+p1 +
+  geom_hline(hlp$)
+
 ```
 
 
