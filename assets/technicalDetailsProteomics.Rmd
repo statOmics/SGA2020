@@ -207,7 +207,7 @@ data.frame(contrasts, seContrasts)
   - We intuitively can explain this because we can use all samples (double the number of samples) to assess the average effect.
   - Hence the variance is a factor two smaller, and the se with a factor $\sqrt{2}$
 
-- Note, that we have the lowest power to pick up an interaction effect. Indeed, the se is a factor $\sqrt{2}$ smaller than for the effect left or right and a factor 2 smaller than for the average effect between ventriculum and atrium.
+- Note, that we have the lowest power to pick up an interaction effect. Indeed, the se is a factor $\sqrt{2}$ larger than for the ventriculum - atrium effect left or right and a factor 2 larger than for the average effect between ventriculum and atrium.
 
 ```{r}
 seContrasts / seContrasts[1]
@@ -260,7 +260,7 @@ data.frame(contrasts, seContrasts, tContrasts, pContrasts)
 \[H_0: \mathbf{L}^T\hat{\boldsymbol{\beta}}=\mathbf{0}\]
 
 - Statistic
-$$\mathbf{F}=\frac{\hat{\boldsymbol{\beta}}^T\mathbf{L}\left(\mathbf{L}^T\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mathbf{L}\right)^{-1}\mathbf{L}^T\hat{\boldsymbol{\beta}}}{n_c} \underset{H_0}{\sim} F_{r,n-p}$$
+$$\mathbf{F}=\frac{\hat{\boldsymbol{\beta}}^T\mathbf{L}\left(\mathbf{L}^T\hat{\boldsymbol{\Sigma}}_{\hat{\boldsymbol{\beta}}}\mathbf{L}\right)^{-1}\mathbf{L}^T\hat{\boldsymbol{\beta}}}{n_c} \underset{H_0}{\sim} F_{n_c,n-p}$$
 follows an F distribution with $n_c$ and n-p degrees of freedom under the omnibus null hypothesis.
 - Note, that $n_c$ equals the number of contrasts, and
 - $\mathbf{L}$ is assumed to be full rank
@@ -358,10 +358,14 @@ with
    \sum_{i=1}^n \Psi(y_i - \mathbf{x}_i\boldsymbol{\beta}) =0,
  \]
  where $\Psi$ is the derivative of $\rho$. For $\hat{\beta}$ possessing the robustness property, $\Psi$ should be bounded.
- \vfill
+
+---
+
  Example: least squares
 
- $\rho(z) = z^2$, and thus $\Psi(z)=2z$ (unbounded!). $\hat{\boldsymbol{\beta}}$ is the solution of
+ - $\rho(z) = z^2$, and thus $\Psi(z)=2z$ (unbounded!). Not robust!
+
+- $\hat{\boldsymbol{\beta}}$ is the solution of
  \[
    \sum_{i=1}^n 2 \mathbf{x}_i (y_i - \mathbf{x}_i^T\boldsymbol{\beta}) = 0 \text{ or } \hat{\boldsymbol{\beta}} = (\mathbf{X}^T\mathbf{X})^{-1}\mathbf{X}\mathbf{y}
  \]
@@ -585,12 +589,12 @@ legend("topleft",
 # Empirical Bayes/Moderated $t$-test.
 
  A general class of moderated test statistics is given by
- \[
-   T_g^{mod} = \frac{\mathbf{L}_k\hat{\boldsymbol{\beta}}}}{\mathbf{L}_k(\mathbf{X}^T\mathbf{WX}^T)^{-1}\mathbf{L}\tilde{s}_p} ,
- \]
- where $\tilde{s}_g$ is a moderated variance estimate.
 
-Simple approach: set $\tilde{s}_g=s_g+s_0$: simply add a small positive constant to the denominator of the t-statistic
+ \[\tilde{T}_p = \frac{\mathbf{L}_k \hat{ \boldsymbol{\beta_p}}}{\mathbf{L}_k^T(\mathbf{X}^T\mathbf{WX})^{-1}\mathbf{L}_k^T \tilde{s}_p^2}\]
+
+ where $\tilde{s}_p$ is a moderated variance estimator.
+
+Simple approach: set $\tilde{s}_p=s_p + s_0$: simply add a small positive constant to the denominator of the t-statistic
 
 \textbf{empirical Bayes} theory provides formal framework for borrowing strength across genes or proteins,
 e.g. popular bioconductor package \textbf{limma}
@@ -624,13 +628,15 @@ Developed for gene expression analysis with micro arrays.
 Let g be the index for gene g.
 \[
 \begin{array}{cc}
-&P\{\beta_{gk}\neq0\}=p_k\\\\
-\text{Prior}&\beta_{gk}\vert \sigma^2_g,\beta_{gk}\neq 0 \sim N(0,v_{0k}\sigma_g^2)\\\\
-&\frac{1}{\sigma^2_g}\sim s^2_0\frac{\chi^2_{d_0}}{d_0}\\\\
-&\hat \beta_{gk} | \beta_{gk} , \sigma_g^2 \sim N( \beta_{gk} , v_{gk}\sigma_g^2)\\
+&\beta_{gk}\vert \sigma^2_g,\beta_{gk}\neq 0 \sim N(0,v_{0k}\sigma_g^2)\\\\
+\text{Prior}\\
+&\frac{1}{\sigma^2_g}\sim s^2_0\frac{\chi^2_{d_0}}{d_0}\\\\\\\\
+&\hat \beta_{gk} | \beta_{gk} , \sigma_g^2 \sim N( \beta_{gk} , v_{gk}\sigma_g^2)\\\\
+\text{Data}\\
 &s_g^2\sim \sigma^2_g\frac{\chi^2_{d_g}}{d_g}\\\\
 \end{array}
 \]
+
 ---
 
 ## Limma  approach
@@ -638,17 +644,22 @@ Let g be the index for gene g.
 Under this assumption, it can be shown that
 
 - Posterior Mean for the variance parameter: \[\tilde{s}^2_p = \text{E}\left[\sigma^2_p\vert s_p^2\right]=\frac{d_0 s_0^2+d_ps_p^2}{d_0+d_p}\]
-- \[\tilde{t}_p=\frac{\mathbf{L}_k \hat \boldsymbol{\beta_p}}{\mathbf{L}_k^T(\mathbf{X}^T\mathbf{WX})^{-1}\mathbf{L}_k^T \tilde{s}_p}\]
+
+- \[\tilde{T}_p=\frac{\mathbf{L}_k \hat{ \boldsymbol{\beta_p}}}{\mathbf{L}_k^T(\mathbf{X}^T\mathbf{WX})^{-1}\mathbf{L}_k^T \tilde{s}_p^2}\]
+
 is t-distributed under $H_0: \mathbf{L}_j\boldsymbol{\beta} = 0$
 
-\[\tilde{t}_p \vert H_0 \sim t(d_0 + d_p)\]
+\[\tilde{T}_p \vert H_0 \sim t(d_0 + d_p)\]
 
 ---
 
 ## Empirical Bayes
-- A fully Bayesian would define the prior distribution by carefully choosing the prior parameters
+- A fully Bayesian
+  - would define the prior distribution by carefully choosing the prior parameters based on prior knowledge on the process
+  - would confront the prior to the data and performs inference using the posterior distribution of the model parameters.
 - In an empirical Bayesian approach one estimates the prior parameters based on the data.
 - In **Limma** moment estimators for $s_0$ and $d_0$ are derived using the information on the gene (protein) wise variances of all genes (proteins).
+- In **Limma** one also does not work with the full posterior distribution for the variances, but with the maximum a-posterior estimate.
 
 ---
 
@@ -783,7 +794,7 @@ The empirical Bayes method can thus indeed recognise the common variance that is
 
 ## Simulation under H_0.
 
-- Mean protein intensity equals mean of the mean intensity for the WT.
+- Mean log2 protein intensity for atrium equals mean log2 protein intensity for ventriculum in the left heart region.
 - sd equals the sd for the protein.
 
 
@@ -809,7 +820,7 @@ coefs0 <- coefs
 coefs0[,3] <- 0
 ```
 
-3. Simulate protein expressions for each protein from a Normal distribution with as mean the protein mean for WT and sd the sd for the protein.
+3. Simulate protein expressions for each protein from a Normal distribution under $H_0$ for left heart region (no FC between atrium and ventriculum left) and sd the sd for the protein.
 ```{r}
 set.seed(104)
 f0 <- sapply(1:p,
@@ -876,7 +887,7 @@ hist(rowData(pe[["proteinRobust"]])$tissueV$pval, main = "realData")
 
 - A list of returned proteins is considered to be in error as soon as it contains at most one false positive protein.
 
-- FWER = P(FP \leq 1)
+- $\text{FWER} = P(FP \leq 1)$
 
 - FWER: probability of making at least one false positive decision or
 probability to declare at least one protein differentially abundant which is truly non differentially abundant
@@ -885,7 +896,7 @@ probability to declare at least one protein differentially abundant which is tru
 
 - Simple method
 - $m$ tests are performed at the level $\alpha/m$
-- FWER$\leq\sum\limits_{g=1}^{m}P(reject H_{0g}\vert H_0\text{ is true})=m \alpha/m=\alpha$
+- FWER$\leq\sum\limits_{p=1}^{m}P(reject H_{0p}\vert H_{0p}\text{ is true})=m \alpha/m=\alpha$
 - Provides strong control
 - Bonferroni is very conservative
 - Works for dependent tests
@@ -906,7 +917,8 @@ padj <- p.adjust(
 Own Implementation: adjust and make sure that p-value is smaller than 1.
 
 ```{r}
-padjSelf <-  rowData(pe[["proteinRobust"]])$tissueV$pval * sum(!is.na(rowData(pe[["proteinRobust"]])$tissueV$pval))
+m <- sum(!is.na(rowData(pe[["proteinRobust"]])$tissueV$pval))
+padjSelf <-  rowData(pe[["proteinRobust"]])$tissueV$pval * m
 padjSelf[padjSelf > 1] <- 1
 
 range(padj - padjSelf, na.rm = TRUE)
@@ -949,9 +961,14 @@ volcano
   - asses k smallest p-value at the $\alpha/(m-k+1)$ level
 - continu as long as you can reject.
 
+The Holm is a step down method (from more to less significant) that corrects in each step for the number of null hypothesis that you still can falsely reject.
+
+---
+
 Adjusted p-values:
-- order p-values with $(k)$ the $k^{th}$ smallest p-value  
-- $\tilde{p}_{(k)}=\min(p_{(k)}(m-i+1),1)$
+
+- Order p-values with $(k)$ the $k^{th}$ smallest p-value  
+- $\tilde{p}_{(k)}=\min(p_{(k)}(m-k+1),1)$
 
 Suppose 2 tests: $p_{(1)}=0.001$, $p_{(2)}=0.0015$
 $\rightarrow$ $\tilde{p}_{(1)}=0.002$, $\tilde{p}_{(2)}=0.0015$
@@ -1046,20 +1063,20 @@ $F(t) = \frac{\# \vert t \vert \leq \vert t\vert}{m}$
 
 \begin{eqnarray}
 FDR(p_0) &=& \text{E}\left[\frac{FP}{(FP + TP)}\right]\\
-&\approx&\frac{\pi_0 p_0}{\frac{\#p \leq p_0}{m}}\\
-&\approx&\frac{p_0 \times m}{\#p \leq p_0}\\
+&\approx&\frac{\pi_0 p_0}{\frac{\#p_p \leq p_0}{m}}\\
+&\approx&\frac{p_0 \times m}{\#p_p \leq p_0}\\
 \end{eqnarray}
 
 So adjusted p-value for protein j equals
-\[\tilde p_j = \frac{p_{0,j} \times m}{\#p \leq p_{0,j}}\]
+\[\tilde p_j = \frac{p_{0,j} \times m}{\#p_p \leq p_{0,j}}\]
 
 However, the FDR always has to be between 0 and 1 so:
 
-\[\tilde p_j = \min\left[\frac{p_{0,j} \times m}{\#p \leq p_{0,j}},1\right]\]
+\[\tilde p_j = \min\left[\frac{p_{0,j} \times m}{\#p_p \leq p_{0,j}},1\right]\]
 
 and the adjusted p-values should remain in the same order as the original p-values.
 
-\[\tilde p_j =  \min\limits_{\forall k: p_k > p_j} \min\left[\frac{p_{0,k} \times m}{\#p \leq p_{0,k}},1\right]\]
+\[\tilde p_j =  \min\limits_{\forall k: p_k > p_j} \min\left[\frac{p_{0,k} \times m}{\#p_p \leq p_{0,k}},1\right]\]
 
 1. Order pvalues
 ```{r}
@@ -1129,6 +1146,6 @@ volcano <- ggplot(rowData(pe[["proteinRobust"]])$tissueV,
 volcano
 ```
 
-The FDR method allows us to return much more larger DA protein lists at the expense of a few false positives.
+The FDR method allows us to return much longer DA protein lists at the expense of a few false positives.
 The FDR controls the fraction of false positives in the list that you return on average on the significance level that is adopted.
 So if you use $\alpha=0.05$ we expect on average 5% of false positives in the list that we return.
