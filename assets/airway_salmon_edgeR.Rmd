@@ -1,15 +1,22 @@
 ---
 title: "Airway: DE analysis based on transcript counts and DESeq2"
 author: "Lieven Clement"
+date: "statOmics, Ghent University (https://statomics.github.io)"
 output:
-  BiocStyle::html_document
+    html_document:
+      code_download: true
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
 ---
 
 # Background
 The data used in this workflow comes from an RNA-seq experiment where airway smooth muscle cells were treated with dexamethasone, a synthetic glucocorticoid steroid with anti-inflammatory effects (Himes et al. 2014). Glucocorticoids are used, for example, by people with asthma to reduce inflammation of the airways. In the experiment, four human airway smooth muscle cell lines were treated with 1 micromolar dexamethasone for 18 hours. For each of the four cell lines, we have a treated and an untreated sample.
 For more description of the experiment see the article, PubMed entry 24926665, and for raw data see the GEO entry GSE52778.
 
-In this file we will assess DE by starting from transcript counts that we summarize at the gene level. The DE analysis is performed by DESeq2. 
+In this file we will assess DE by starting from transcript counts that we summarize at the gene level. The DE analysis is performed by DESeq2.
 The analysis is based on the R/markdown script from Charlotte Soneson given at shortcourse in 2019: https://uclouvain-cbio.github.io/BSS2019/
 https://uclouvain-cbio.github.io/BSS2019/rnaseq_gene_summerschool_belgium_2019.html
 
@@ -26,15 +33,17 @@ target<-readRDS("airwayMetaData.rds")
 We do not have the Albuterol samples
 
 ```{r}
-rownames(target)<-target$Run
-target<-target[-grep("Albuterol",target[,"treatment:ch1"]),]
+rownames(target) <- target$Run
+target <- target[-grep("Albuterol",target[,"treatment:ch1"]),]
 target[,grep(":ch1",colnames(target))]
 ```
 
 ```{r}
-target$cellLine<-as.factor(target[,grep("cell line:ch1",colnames(target))])
-target$treatment<-as.factor(target[,grep("treatment:ch1",colnames(target))])
-target$treatment<-relevel(target$treatment,"Untreated")
+target$cellLine <- target[, grep("cell line:ch1", colnames(target))] %>%
+  as.factor
+target$treatment<-target[, grep("treatment:ch1", colnames(target))] %>%
+  as.factor
+target$treatment<-relevel(target$treatment, "Untreated")
 ```
 
 
@@ -48,7 +57,7 @@ Software such as *kallisto*
 provide quantifications (usually both as counts and as TPMs) for each
 *transcript*. These can then be summarized on the gene level by adding all
 values for transcripts from the same gene. A simple way to import results from
-these packages into R is provided by the `r Biocpkg("tximport")` and 
+these packages into R is provided by the `r Biocpkg("tximport")` and
 `r Biocpkg("tximeta")` packages. Here, *tximport* reads the quantifications into a
 list of matrices, and *tximeta* aggregates the information into a
 *SummarizedExperiment* object, and also automatically adds additional
@@ -88,7 +97,7 @@ stopifnot(all(file.exists(salmonfiles)))
 ## Add a column "files" to the metadata table. This table must contain at least
 ## two columns: "names" and "files"
 coldata <- cbind(target, files = salmonfiles, stringsAsFactors = FALSE)
-coldata$names<-coldata$Run
+coldata$names <- coldata$Run
 
 ## Import quantifications on the transcript level
 st <- tximeta::tximeta(coldata)
@@ -103,7 +112,7 @@ sg
 
 Note that *Salmon* returns *estimated* counts, which are not necessarily
 integers. They may need to be rounded before they are passed to count-based
-statistical methods (e.g. *DESeq2*). 
+statistical methods (e.g. *DESeq2*).
 This is not necesary for *edgeR*.
 
 ```{r}
@@ -118,8 +127,8 @@ counts_salmon <- round(assay(sg, "counts"))
 suppressPackageStartupMessages({
   library(edgeR)
 })
-dge <- DGEList(counts = counts_salmon, 
-               samples = target) 
+dge <- DGEList(counts = counts_salmon,
+               samples = target)
 ```
 
 ```{r}
@@ -127,7 +136,7 @@ avetxlengths <- assay(sg, "length")
 stopifnot(all(rownames(avetxlengths) == rownames(counts_salmon)))
 stopifnot(all(colnames(avetxlengths) == colnames(counts_salmon)))
 avetxlengths <- avetxlengths/exp(rowMeans(log(avetxlengths)))
-offsets <- log(calcNormFactors(counts_salmon/avetxlengths)) + 
+offsets <- log(calcNormFactors(counts_salmon/avetxlengths)) +
   log(colSums(counts_salmon/avetxlengths))
 dge <- scaleOffset(dge, t(t(log(avetxlengths)) + offsets))
 names(dge)
@@ -136,22 +145,21 @@ names(dge)
 ## Filtering and normalisation
 
 ```{r}
-design<-model.matrix(~treatment+cellLine,data=target)
+design <- model.matrix(~treatment+cellLine,data=target)
 keep <- filterByExpr(dge, design)
 dge <- dge[keep, ,keep.lib.sizes=FALSE]
-dge<-calcNormFactors(dge)
+dge <- calcNormFactors(dge)
 dge$samples
 ```
 
-## Data exploration 
-
+## Data exploration
 
 One way to reduce dimensionality is the use of multidimensional scaling (MDS). For MDS, we first have to calculate all pairwise distances between our objects (samples in this case), and then create a (typically) two-dimensional representation where these pre-calculated distances are represented as accurately as possible. This means that depending on how the pairwise sample distances are defined, the two-dimensional plot can be very different, and it is important to choose a distance that is suitable for the type of data at hand.
 
 edgeR contains a function plotMDS, which operates on a DGEList object and generates a two-dimensional MDS representation of the samples. The default distance between two samples can be interpreted as the "typical" log fold change between the two samples, for the genes that are most different between them (by default, the top 500 genes, but this can be modified). We generate an MDS plot from the DGEList object dge, coloring by the treatment and using different plot symbols for different cell lines.
 
 ```{r}
-colnames(dge)<-paste0(substr(target$cellLine,1,3),"_",substr(target$treatment,1,3))
+colnames(dge) <- paste0(substr(target$cellLine,1,3),"_",substr(target$treatment,1,3))
 plotMDS(dge, top = 500,col=as.double(target$cellLine))
 ```
 
@@ -160,7 +168,7 @@ plotMDS(dge, top = 500,col=as.double(target$cellLine))
 
 ### Model
 
-We first estimate the overdispersion. 
+We first estimate the overdispersion.
 
 ```{r}
 dge <- estimateDisp(dge, design)
@@ -171,7 +179,7 @@ plotBCV(dge)
 ```{r}
 fit <- glmFit(dge, design)
 lrt <- glmLRT(fit, coef = "treatmentDexamethasone")
-ttAll <-topTags(lrt, n = nrow(dge)) # all genes
+ttAll <- topTags(lrt, n = nrow(dge)) # all genes
 hist(ttAll$table$PValue)
 tt <- topTags(lrt, n = nrow(dge), p.value = 0.05) # genes with adj.p<0.05
 tt
@@ -184,7 +192,7 @@ We first make a volcanoplot and an MA plot.
 
 ```{r}
 library(ggplot2)
-volcano<- ggplot(ttAll$table,aes(x=logFC,y=-log10(PValue),color=FDR<0.05)) + geom_point() + scale_color_manual(values=c("black","red"))
+volcano <-  ggplot(ttAll$table,aes(x=logFC,y=-log10(PValue),color=FDR<0.05)) + geom_point() + scale_color_manual(values=c("black","red"))
 volcano
 plotSmear(lrt, de.tags = row.names(tt$table))
 library(pheatmap)

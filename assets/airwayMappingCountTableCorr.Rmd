@@ -1,8 +1,15 @@
 ---
 title: "Airway: Read mapping and count table"
 author: "Lieven Clement"
+date: "statOmics, Ghent University (https://statomics.github.io)"
 output:
-  BiocStyle::html_document
+    html_document:
+      code_download: true
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
 ---
 
 # Background
@@ -21,7 +28,7 @@ getwd()
 ```
 
 We will use the Rsubread read mapper because that is avaible in R for all platforms (Linux, Windows and Mac).
-For real projects I prefer the use of STAR. 
+For real projects I prefer the use of STAR.
 
 # Get info on experiment
 
@@ -34,7 +41,7 @@ gse<-getGEO("GSE52778")
 length(gse)
 ```
 
-There is one object for this experiment. 
+There is one object for this experiment.
 
 ```{r}
 pdata<-pData(gse[[1]])
@@ -46,8 +53,8 @@ head(pdata)[1:6,]
 ## Get info on sequencing files
 
 Download SRA info. To link sample info to info sequencing: Go to corresponding SRA page and save the information via the "Send to: File button"
-This file can also be used to make a script to download sequencing files from the web. 
-Note that sra files can be converted to fastq files via the fastq-dump function of the sra-tools. 
+This file can also be used to make a script to download sequencing files from the web.
+Note that sra files can be converted to fastq files via the fastq-dump function of the sra-tools.
 
 ```{r}
 sraInfo<-read.csv("SraRunInfo.csv")
@@ -67,8 +74,8 @@ The run is also the name of the SRA file so we will be able to link alignment fi
 # Path to Genome index
 
 All reads in the subsampled fastq files map to chromosome 1.
-We have created an index for the chromosome 1 of the Human reference genome in an other R-markdown file. 
-We will reuse it here. 
+We have created an index for the chromosome 1 of the Human reference genome in an other R-markdown file.
+We will reuse it here.
 
 ```{r}
 indexName<-"airway_index/homo_sapiens_GRCh38_dna_chromosome_1_rsubread"
@@ -94,7 +101,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format="FASTQ",output_
 
 #CountTable
 ```{r}
-fcAirway<-featureCounts(files=bamfls,annot.ext="Homo_sapiens.GRCh38.98.gtf.gz",isGTFAnnotationFile=TRUE, GTF.featureType = "exon", GTF.attrType = "gene_id", useMetaFeatures = TRUE, strandSpecific = 0, 
+fcAirway<-featureCounts(files=bamfls,annot.ext="Homo_sapiens.GRCh38.98.gtf.gz",isGTFAnnotationFile=TRUE, GTF.featureType = "exon", GTF.attrType = "gene_id", useMetaFeatures = TRUE, strandSpecific = 0,
                     isPairedEnd = TRUE)
 head(fcAirway$counts)
 ```
@@ -105,7 +112,3 @@ head(fcAirway$counts)
 saveRDS(fcAirway,file="fcAirway.rds")
 saveRDS(pdata,file="airwayMetaData.rds")
 ```
-
-
-
-

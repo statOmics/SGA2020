@@ -1,0 +1,67 @@
+---
+title: "Cursus Statistiek 2020-2021"
+author: "Lieven Clement"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+output: bookdown::gitbook
+documentclass: book
+classoption: 12pt,dutch,coursenotes
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+github-repo: statOmics/statistiek2deBach
+description: "Basiscursus Statistiek voor de 2de Bachelor of Science in de Biologie, - in de Biochemie & de Biotechnologie, - in de Biomedische Wetenschappen, en - in de Chemie"
+always_allow_html: true
+---
+
+```{r include=FALSE}
+options(Encoding="UTF-8")
+# automatically create a bib database for R package
+knitr::write_bib(c(
+  .packages(), 'bookdown', 'knitr', 'rmarkdown'
+), 'packages.bib')
+# compile to html
+# bookdown::render_book("index.Rmd", "bookdown::gitbook")
+ knitr::opts_chunk$set(warning=FALSE, message=FALSE); tableType="html"
+# compile to pdf
+# bookdown::render_book("index.Rmd", "bookdown::pdf_book")
+# Uncomment lines below when compiling to pdf to avoid that code chunks end up in margin
+ knitr::opts_chunk$set(tidy.opts=list(width.cutoff=50),tidy=TRUE,warning=FALSE, message=FALSE); tableType="latex"
+```
+
+# Woord vooraf {-}
+<!---noNum-->
+
+Zoals steeds heeft het herwerken van de cursus heel wat voeten in de aarde. Gelukkig kon ik me hierbij baseren op cursusmateriaal van collega's. In het bijzonder wens ik prof. Stijn Vansteelandt^[die vroeger dit opleidingsonderdeel verzorgde], prof. Olivier Thas^[Opleidingsonderdeel "Statistische Dataverwerking", Bachelor in de Bio-ingenieurswetenschappen, UGent] en prof. Geert Verbeke^[Opleidingsonderdeel "Beginselen van biostatistiek", Bachelor Biomedical Sciences, KU Leuven] te bedanken voor het delen van hun cursusmateriaal en de stimulerende discussies rond statistiekonderwijs. Daarnaast was het ook een nieuwe ervaring om een volledige cursus te ontwikkelen binnen het statistische opensource software pakket R via het fantastische bookdown package van Yihui Xie.
+
+Lieven, September 2018
+
+
+In de zomer 2020 hebben we de transitie gemaakt van een online ebook naar een volledig online course.
+Hierbij integreren we alle materiaal voor de cursus en de oefeningen in het Dodona leerplatform.
+De cursus kan volledig in dit platform worden doorlopen aan de hand van leesopdrachten voor de theorie en d.m.v. oefeningen waarvan de code automatisch kan worden beoordeeld.
+Dit huzarenstukje was uiteraard niet mogelijk zonder de hulp van een bijzonder gedreven team.
+
+Eerst en vooral wil ik het Dodona team bedanken om me herhaaldelijk aan te sporen om ook statistiekonderwijs via Dodona te verstrekken. Prof. Peter Dawyndt en Dr. Bart Mesure hebben samen met hun team een indrukwekkend platform ontwikkelt voor het doceren van programmeertalen.
+
+Daarnaast heeft Charlotte Van Petegem het platform ook voor statistiek onderwijs unlocked door de ontwikkeling van een R-judge waarbij R code automatisch kan worden beoordeeld.
+
+De Faculteit Wetenschappen van de Universiteit van Gent heeft het me d.m.v. een onderwijs en innovatieproject mogelijk gemaakt om in augustus 2020 een team van enthousiaste jobstudenten: Gust Bogaert, Luca Renders, Stijn Vandenbulcke en Victor Verstraelen aan te werven die in een maand tijd twee modules (Introductie tot R en Data exploratie en Data Visualisatie in R) in Dodona hebben geïmplementeerd. Dat was mede mogelijk omdat we van prof. Rafael Irizarry de toestemming kregen om de broncode van zijn boek Introduction to Data Science en alle youtube videos   te integreren in deze modules.
+
+Onder impuls van mijn team jonge enthousiaste wolven hebben we het aangedurfd om midden september 2020 ook mijn volledige cursus Statistiek in Dodona onder te gaan brengen. In deze bevreemdende covid-19 tijden lijkt me dit de ultieme manier om de stof zo goed mogelijk interactief en volledig online aan te bieden.
+Ik kan het schitterende team van jobstudenten en het voltallige Dodona team niet voldoende bedanken, jullie gaven me vleugels!
+
+Daarnaast wil ik ook mijn familie bedanken voor hun geduld en nooit aflatende steun tijdens de ontwikkeling van deze cursus.
+
+Lieven, September 2020
+
+
+# Links {-}
+<!---noNum-->
+- De volledig interactieve versie van deze cursus is beschikbaar op https://dodona.ugent.be/nl/courses/374/
+
+- Een html versie van de cursus is beschikbaar op https://statomics.github.io/sbc20/ waardoor alle voorbeelden en code in deze cursus makkelijk in R kunnen worden gereproduceerd, wat handig kan zijn wanneer je zelf r-markdown scripts ontwikkeld.
+
+- Een pdf versie van de cursus is beschikbaar op https://statomics.github.io/sbc20/Statistiek_2020_2021.pdf
+
+- Voor een introductie tot R en Data Visualisatie raden we de eerste twee delen aan van het ebook https://rafalab.github.io/dsbook/ aan van prof. Raphael Irizarry. Volledig interactieve Dodona cursussen van deze twee delen vind je terug op Statistiek Introductie tot R: https://dodona.ugent.be/nl/courses/375/ en Statistiek: Data Exploration and Visualisation in R: https://dodona.ugent.be/nl/courses/376/.

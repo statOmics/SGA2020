@@ -1,15 +1,22 @@
 ---
 title: "Airway: DE analysis based on transcript counts and DESeq2"
 author: "Lieven Clement"
+date: "statOmics, Ghent University (https://statomics.github.io)"
 output:
-  BiocStyle::html_document
+    html_document:
+      code_download: true
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
 ---
 
 # Background
 The data used in this workflow comes from an RNA-seq experiment where airway smooth muscle cells were treated with dexamethasone, a synthetic glucocorticoid steroid with anti-inflammatory effects (Himes et al. 2014). Glucocorticoids are used, for example, by people with asthma to reduce inflammation of the airways. In the experiment, four human airway smooth muscle cell lines were treated with 1 micromolar dexamethasone for 18 hours. For each of the four cell lines, we have a treated and an untreated sample.
 For more description of the experiment see the article, PubMed entry 24926665, and for raw data see the GEO entry GSE52778.
 
-In this file we will assess DE by starting from transcript counts that we summarize at the gene level. The DE analysis is performed by DESeq2. 
+In this file we will assess DE by starting from transcript counts that we summarize at the gene level. The DE analysis is performed by DESeq2.
 The analysis is based on the R/markdown script from Charlotte Soneson given at shortcourse in 2019: https://uclouvain-cbio.github.io/BSS2019/
 https://uclouvain-cbio.github.io/BSS2019/rnaseq_gene_summerschool_belgium_2019.html
 
@@ -20,21 +27,22 @@ FastQ files with a small subset of the reads can be found on https://github.com/
 ## Read Meta Data
 
 ```{r}
-target<-readRDS("airwayMetaData.rds")
+target <- readRDS("airwayMetaData.rds")
 ```
 
 We do not have the Albuterol samples
 
 ```{r}
-rownames(target)<-target$Run
-target<-target[-grep("Albuterol",target[,"treatment:ch1"]),]
-target[,grep(":ch1",colnames(target))]
+rownames(target) <- target$Run
+target <- target[-grep("Albuterol", target[,"treatment:ch1"]),]
+target[,grep(":ch1", colnames(target))]
 ```
 
 ```{r}
-target$cellLine<-as.factor(target[,grep("cell line:ch1",colnames(target))])
-target$treatment<-as.factor(target[,grep("treatment:ch1",colnames(target))])
-target$treatment<-relevel(target$treatment,"Untreated")
+target$cellLine <- target[,grep("cell line:ch1",colnames(target))] %>% as.factor
+target$treatment <- target[,
+  grep("treatment:ch1",colnames(target))] %>% as.factor
+target$treatment <- relevel(target$treatment,"Untreated")
 ```
 
 
@@ -48,7 +56,7 @@ Software such as *kallisto*
 provide quantifications (usually both as counts and as TPMs) for each
 *transcript*. These can then be summarized on the gene level by adding all
 values for transcripts from the same gene. A simple way to import results from
-these packages into R is provided by the `r Biocpkg("tximport")` and 
+these packages into R is provided by the `r Biocpkg("tximport")` and
 `r Biocpkg("tximeta")` packages. Here, *tximport* reads the quantifications into a
 list of matrices, and *tximeta* aggregates the information into a
 *SummarizedExperiment* object, and also automatically adds additional
@@ -59,7 +67,7 @@ offsets to improve the differential expression analysis by accounting for
 differential isoform usage across samples [@Soneson2015Differential].
 aturecounts object
 
-##Salmon
+## Salmon
 
 The code below imports the *Salmon* quantifications into R using the *tximeta*
 package. Note how the transcriptome that was used for the quantification is
@@ -103,7 +111,7 @@ sg
 
 Note that *Salmon* returns *estimated* counts, which are not necessarily
 integers. They may need to be rounded before they are passed to count-based
-statistical methods (e.g. *DESeq2*). 
+statistical methods (e.g. *DESeq2*).
 This is not necesary for *edgeR*.
 
 ```{r}
@@ -121,15 +129,15 @@ ds_se <- DESeqDataSet(sg, design = ~ cellLine + treatment)
 
 
 
-## Data exploration 
+## Data exploration
 
-First we transform the counts with a variance stabilizing transformation. 
+First we transform the counts with a variance stabilizing transformation.
 
 ```{r}
 vsd <- DESeq2::vst(ds_se)
 ```
 
-PCA plot 
+PCA plot
 ```{r}
 plotPCA(vsd, intgroup = c("cellLine","treatment"))
 plotPCA(vsd, intgroup = "cellLine")
@@ -166,6 +174,5 @@ mat <- assay(vsd)[head(order(res$padj), 30), ]
 pheatmap(mat)
 ```
 
-Modify the file for an edgeR analysis. 
-You can use the script of the short course as resource. 
-s
+Modify the file for an edgeR analysis.
+You can use the script of the short course as resource.

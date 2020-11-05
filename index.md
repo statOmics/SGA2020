@@ -78,8 +78,25 @@ A primer to R and Data visualisation  in R can be found in:
   - [mouse RCB](assets/mouseRCB2.html)
   - [mouse RCB wrong analysis](assets/mouseRCBwrongAnalysis.html)
   - [heart](assets/heartMainInteraction.html)
+  - [heart](assets/heartMainInteractionStageR.html)
 
 
 ---
+
+**Part II: Next-generation sequencing**
+
+  - [Download Tutorial Data](https://github.com/statOmics/SGA2020/tree/data-rnaseq)
+
+  1. Introduction to transcriptomics with next generation sequencing
+
+      - slides: [intro](assets/rnaseq1.pdf)
+      - Background: [RNA sequencing data hitchhiker's guide to expression analysis](https://www.zora.uzh.ch/id/eprint/181231/1/Ann_Rev_Biomed_Data_Science_-_RNA_sequencing_data__hitchhiker_s__guide_to_expression_analysis.pdf)
+      - tutorial
+
+        - Mapping: [html](pages/elegansMappingCountTable.html),[Rmd](https://raw.githubusercontent.com/statOmics/SGA2019/gh-pages/assets/elegansMappingCountTable.Rmd)
+        - Differential Analysis: [html](pages/elegans.html),[Rmd](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/elegans.Rmd), which source of variability is not included in the analysis and how could we account for this? Try to adjust the script accordingly.  
+
+        - Background for the airway example (count table on small fastQ files available in the Tutorial Data):
+      [Rmd](https://raw.githubusercontent.com/statOmics/SGA2020/gh-pages/assets/airwayMappingCountTable.Rmd)
 
 ##### [Instructors](pages/instructors.md)

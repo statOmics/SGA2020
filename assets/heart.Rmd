@@ -11,6 +11,7 @@ output:
       highlight: tango
       number_sections: true
 ---
+
 # Background
 Researchers have assessed the proteome in different regions of the heart for 3 patients (identifiers 3, 4, and 8). For each patient they sampled the left atrium (LA), right atrium (RA), left ventricle (LV) and the right ventricle (RV). The data are a small subset of the public dataset PXD006675 on PRIDE.
 

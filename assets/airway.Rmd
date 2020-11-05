@@ -1,8 +1,15 @@
 ---
 title: "Airway: DE analysis"
 author: "Lieven Clement"
+date: "statOmics, Ghent University (https://statomics.github.io)"
 output:
-  BiocStyle::html_document
+    html_document:
+      code_download: true
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
 ---
 
 # Background
@@ -15,8 +22,8 @@ package](https://www.bioconductor.org/packages/release/workflows/html/rnaseqGene
 
 # Data
 FastQ files with a small subset of the reads can be found on https://github.com/statOmics/SGA2019/tree/data-rnaseq
-Here, we will not use our count table because it is based on a small subset of the reads. 
-We will use the count table that was provided after mapping all the reads with the read mapper star. 
+Here, we will not use our count table because it is based on a small subset of the reads.
+We will use the count table that was provided after mapping all the reads with the read mapper star.
 
 
 ```{r}
@@ -25,7 +32,7 @@ library(edgeR)
 
 #Read featurecounts object
 
-We import the featurecounts object that we have stored. 
+We import the featurecounts object that we have stored.
 
 ```{r}
 fc <- readRDS("featureCounts/star_featurecounts.rds")
@@ -76,7 +83,7 @@ dge<-calcNormFactors(dge)
 
 
 
-## Data exploration 
+## Data exploration
 
 One way to reduce dimensionality is the use of multidimensional scaling (MDS). For MDS, we first have to calculate all pairwise distances between our objects (samples in this case), and then create a (typically) two-dimensional representation where these pre-calculated distances are represented as accurately as possible. This means that depending on how the pairwise sample distances are defined, the two-dimensional plot can be very different, and it is important to choose a distance that is suitable for the type of data at hand.
 
@@ -93,7 +100,7 @@ plotMDS(dge, top = 500,col=as.double(target$cellType))
 
 ### Model
 
-We first estimate the overdispersion. 
+We first estimate the overdispersion.
 
 ```{r}
 dge <- estimateDisp(dge, design)
@@ -106,7 +113,7 @@ Finally, we fit the generalized linear model and perform the test. In the glmLRT
 ```{r}
 fit <- glmFit(dge, design)
 lrt <- glmLRT(fit, coef = "treatmentDexamethasone")
-ttAll <-topTags(lrt, n = nrow(dge)) # all genes
+ttAll <- topTags(lrt, n = nrow(dge)) # all genes
 hist(ttAll$table$PValue)
 tt <- topTags(lrt, n = nrow(dge), p.value = 0.05) # genes with adj.p<0.05
 tt

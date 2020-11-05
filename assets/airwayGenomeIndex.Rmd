@@ -1,8 +1,15 @@
 ---
 title: "Airway: Genome Index"
 author: "Lieven Clement"
+date: "statOmics, Ghent University (https://statomics.github.io)"
 output:
-  BiocStyle::html_document
+    html_document:
+      code_download: true
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
 ---
 
 # Background
@@ -11,10 +18,10 @@ For more description of the experiment see the article, PubMed entry 24926665, a
 
 # Intro
 
-In most cases you will have different project on the same organism. 
-Hence, you will be able to use the same index for all of the projects on the same organism. 
-We typically do this once and reuse this index over and over again. 
-I will therefore build the index in a separate script. 
+In most cases you will have different project on the same organism.
+Hence, you will be able to use the same index for all of the projects on the same organism.
+We typically do this once and reuse this index over and over again.
+I will therefore build the index in a separate script.
 Therefore, I will construct the Rsubread index for th
 # Data
 FastQ files with a small subset of the reads can be found on https://github.com/statOmics/SGA2019/tree/data-rnaseq
@@ -24,11 +31,11 @@ FastQ files with a small subset of the reads can be found on https://github.com/
 library("Rsubread")
 ```
 
-# Build index for Human Chromosome 1 
+# Build index for Human Chromosome 1
 
-All reads in the subsampled fastq files map to chromosome 1. 
-We therefore only build an index to chromosome 1 of the human genome so as to save time and disk space. 
-Normally we build an index using the primary assembly fasta . 
+All reads in the subsampled fastq files map to chromosome 1.
+We therefore only build an index to chromosome 1 of the human genome so as to save time and disk space.
+Normally we build an index using the primary assembly fasta .
 We downloaded the fasta data for human from Ensembl (http://www.ensembl.org/info/data/ftp/index.html).  
 
 ```{r}
