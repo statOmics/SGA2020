@@ -1,0 +1,68 @@
+[2019-03-21 21:37:52.601] [jointLog] [info] Fragment incompatibility prior below threshold.  Incompatible fragments will be ignored.
+[2019-03-21 21:37:52.601] [jointLog] [info] Usage of --validateMappings implies use of minScoreFraction. Since not explicitly specified, it is being set to 0.65
+[2019-03-21 21:37:52.601] [jointLog] [info] Usage of --validateMappings implies use of range factorization. rangeFactorizationBins is being set to 4
+[2019-03-21 21:37:52.601] [jointLog] [info] Usage of --validateMappings implies a default consensus slack of 1. Setting consensusSlack to 1.
+[2019-03-21 21:37:52.601] [jointLog] [info] parsing read library format
+[2019-03-21 21:37:52.601] [jointLog] [info] There is 1 library.
+[2019-03-21 21:37:52.648] [jointLog] [info] Loading Quasi index
+[2019-03-21 21:37:52.648] [jointLog] [info] Loading 32-bit quasi index
+[2019-03-21 21:37:58.721] [jointLog] [info] done
+[2019-03-21 21:37:58.721] [jointLog] [info] Index contained 205,870 targets
+[2019-03-21 21:38:01.760] [jointLog] [info] Automatically detected most likely library type as IU
+[2019-03-21 21:38:59.935] [jointLog] [info] Thread saw mini-batch with a maximum of 0.38% zero probability fragments
+[2019-03-21 21:38:59.935] [jointLog] [info] Thread saw mini-batch with a maximum of 0.44% zero probability fragments
+[2019-03-21 21:38:59.935] [jointLog] [info] Thread saw mini-batch with a maximum of 0.34% zero probability fragments
+[2019-03-21 21:38:59.939] [jointLog] [info] Thread saw mini-batch with a maximum of 0.34% zero probability fragments
+[2019-03-21 21:38:59.954] [jointLog] [info] Thread saw mini-batch with a maximum of 0.32% zero probability fragments
+[2019-03-21 21:38:59.959] [jointLog] [info] Thread saw mini-batch with a maximum of 0.34% zero probability fragments
+[2019-03-21 21:38:59.962] [jointLog] [info] Thread saw mini-batch with a maximum of 0.32% zero probability fragments
+[2019-03-21 21:38:59.975] [jointLog] [info] Thread saw mini-batch with a maximum of 0.36% zero probability fragments
+[2019-03-21 21:38:59.987] [jointLog] [info] Thread saw mini-batch with a maximum of 0.40% zero probability fragments
+[2019-03-21 21:38:59.998] [jointLog] [info] Thread saw mini-batch with a maximum of 0.36% zero probability fragments
+[2019-03-21 21:39:00.003] [jointLog] [info] Thread saw mini-batch with a maximum of 0.30% zero probability fragments
+[2019-03-21 21:39:00.017] [jointLog] [info] Thread saw mini-batch with a maximum of 0.36% zero probability fragments
+[2019-03-21 21:39:00.343] [jointLog] [info] Computed 472,530 rich equivalence classes for further processing
+[2019-03-21 21:39:00.343] [jointLog] [info] Counted 26,088,219 total reads in the equivalence classes 
+[2019-03-21 21:39:00.375] [jointLog] [info] Mapping rate = 92.7209%
+
+[2019-03-21 21:39:00.375] [jointLog] [info] finished quantifyLibrary()
+[2019-03-21 21:39:00.376] [jointLog] [info] Starting optimizer
+[2019-03-21 21:39:00.534] [jointLog] [info] Marked 0 weighted equivalence classes as degenerate
+[2019-03-21 21:39:00.554] [jointLog] [info] iteration = 0 | max rel diff. = 5800.01
+[2019-03-21 21:39:00.715] [jointLog] [info] iteration 11, adjusting effective lengths to account for biases
+[2019-03-21 21:39:00.344] [fileLog] [info] 
+At end of round 0
+==================
+Observed 28136282 total fragments (28136282 in most recent round)
+
+[2019-03-21 21:39:19.554] [jointLog] [info] Computed expected counts (for bias correction)
+[2019-03-21 21:39:19.555] [jointLog] [info] processed bias for 0.0% of the transcripts
+[2019-03-21 21:39:23.399] [jointLog] [info] processed bias for 10.0% of the transcripts
+[2019-03-21 21:39:27.188] [jointLog] [info] processed bias for 20.0% of the transcripts
+[2019-03-21 21:39:30.781] [jointLog] [info] processed bias for 30.0% of the transcripts
+[2019-03-21 21:39:34.450] [jointLog] [info] processed bias for 40.0% of the transcripts
+[2019-03-21 21:39:38.102] [jointLog] [info] processed bias for 50.0% of the transcripts
+[2019-03-21 21:39:39.959] [jointLog] [info] processed bias for 100.0% of the transcripts
+[2019-03-21 21:39:41.384] [jointLog] [info] iteration = 100 | max rel diff. = 16.6415
+[2019-03-21 21:39:42.942] [jointLog] [info] iteration = 200 | max rel diff. = 17.6549
+[2019-03-21 21:39:44.495] [jointLog] [info] iteration = 300 | max rel diff. = 14.9892
+[2019-03-21 21:39:46.045] [jointLog] [info] iteration = 400 | max rel diff. = 5.91181
+[2019-03-21 21:39:47.604] [jointLog] [info] iteration = 500 | max rel diff. = 10.6304
+[2019-03-21 21:39:49.158] [jointLog] [info] iteration = 600 | max rel diff. = 0.286356
+[2019-03-21 21:39:50.717] [jointLog] [info] iteration = 700 | max rel diff. = 0.270441
+[2019-03-21 21:39:52.279] [jointLog] [info] iteration = 800 | max rel diff. = 0.70147
+[2019-03-21 21:39:53.832] [jointLog] [info] iteration = 900 | max rel diff. = 2.1911
+[2019-03-21 21:39:55.386] [jointLog] [info] iteration = 1,000 | max rel diff. = 0.103408
+[2019-03-21 21:39:56.939] [jointLog] [info] iteration = 1,100 | max rel diff. = 0.152033
+[2019-03-21 21:39:58.492] [jointLog] [info] iteration = 1,200 | max rel diff. = 0.0655491
+[2019-03-21 21:40:00.048] [jointLog] [info] iteration = 1,300 | max rel diff. = 0.270494
+[2019-03-21 21:40:01.614] [jointLog] [info] iteration = 1,400 | max rel diff. = 5.33799
+[2019-03-21 21:40:03.188] [jointLog] [info] iteration = 1,500 | max rel diff. = 0.101367
+[2019-03-21 21:40:04.769] [jointLog] [info] iteration = 1,600 | max rel diff. = 0.27513
+[2019-03-21 21:40:06.349] [jointLog] [info] iteration = 1,700 | max rel diff. = 0.0990948
+[2019-03-21 21:40:07.926] [jointLog] [info] iteration = 1,800 | max rel diff. = 0.163483
+[2019-03-21 21:40:09.504] [jointLog] [info] iteration = 1,900 | max rel diff. = 0.049586
+[2019-03-21 21:40:10.166] [jointLog] [info] iteration = 1,943 | max rel diff. = 0.00864996
+[2019-03-21 21:40:10.178] [jointLog] [info] Finished optimizer
+[2019-03-21 21:40:10.178] [jointLog] [info] writing output 
+

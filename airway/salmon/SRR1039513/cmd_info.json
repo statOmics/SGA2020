@@ -1,0 +1,13 @@
+{
+    "salmon_version": "0.12.0",
+    "index": "/work/gbioinfo/sonechar/DB/Human/hg38/refsalmon/salmon-0.12.0_hg38_gencode29_k31.sidx",
+    "libType": "A",
+    "mates1": "FASTQ/SRR1039513_1.fastq.gz",
+    "mates2": "FASTQ/SRR1039513_2.fastq.gz",
+    "validateMappings": [],
+    "threads": "12",
+    "gcBias": [],
+    "seqBias": [],
+    "output": "salmon/SRR1039513",
+    "auxDir": "aux_info"
+}
