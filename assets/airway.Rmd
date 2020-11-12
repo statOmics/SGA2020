@@ -28,6 +28,7 @@ We will use the count table that was provided after mapping all the reads with t
 
 ```{r}
 library(edgeR)
+library(tidyverse)
 ```
 
 #Read featurecounts object
@@ -35,48 +36,54 @@ library(edgeR)
 We import the featurecounts object that we have stored.
 
 ```{r}
-fc <- readRDS("featureCounts/star_featurecounts.rds")
+fc <-  readRDS(
+  url("https://github.com/statOmics/SGA2020/blob/data-rnaseq/airway/featureCounts/star_featurecounts.rds?raw=true")
+  )
 colnames(fc$counts)
 ```
 
 ## Read Meta Data
 
 ```{r}
-target<-readRDS("airwayMetaData.rds")
+target <- readRDS("airwayMetaData.rds")
 ```
 
 # Data Analysis
 ## Setup count object edgeR
 
 ```{r}
-dge<-DGEList(fc$counts)
+dge <- DGEList(fc$counts)
 colnames(dge)==target$Run
 target$Run%in%colnames(dge)
 ```
 
 ```{r}
-rownames(target)<-target$Run
-target<-target[colnames(dge),]
+rownames(target) <- target$Run
+target <- target[colnames(dge),]
 target[,grep(":ch1",colnames(target))]
 ```
 
 ```{r}
-target$cellLine<-as.factor(target[,grep("cell line:ch1",colnames(target))])
-target$treatment<-as.factor(target[,grep("treatment:ch1",colnames(target))])
-target$treatment<-relevel(target$treatment,"Untreated")
+target$cellLine <- as.factor(target[,grep("cell line:ch1",colnames(target))])
+target$treatment <- as.factor(target[,grep("treatment:ch1",colnames(target))])
+target$treatment <- relevel(target$treatment,"Untreated")
 ```
 
 
 ```{r}
-colnames(dge)<-paste0(substr(target$cellLine,1,3),"_",substr(target$treatment,1,3))
+colnames(dge) <- paste0(
+  substr(target$cellLine, 1, 3),
+  "_",
+  substr(target$treatment, 1, 3)
+  )
 ```
 
 ## Filtering and normalisation
 
 ```{r}
-design<-model.matrix(~treatment+cellLine,data=target)
+design <- model.matrix( ~ treatment + cellLine, data = target)
 keep <- filterByExpr(dge, design)
-dge <- dge[keep, ,keep.lib.sizes=FALSE]
+dge <- dge[keep, , keep.lib.sizes=FALSE]
 dge<-calcNormFactors(dge)
 ```
 
