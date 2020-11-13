@@ -111,6 +111,8 @@ A primer to R and Data visualisation  in R can be found in:
 
       - Paired-end sequencing was performed on primary cultures from parathyroid tumors of 4 patients at 2 time points over 3 conditions (control, treatment with diarylpropionitrile (DPN) and treatment with 4-hydroxytamoxifen (OHT)). DPN is a selective estrogen receptor agonist and OHT is a selective estrogen receptor modulator. One sample (patient 4, 24 hours, control) was omitted by the paper authors due to low quality. Data, the count table and information on the experiment is available at http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE37211. It is not required to do the read mapping!
 
+3. Solutions
 
+    - Airway Example: [GenomeIndex](assets/airwayGenomeIndex.html), [read mapping and count table](assets/airwayMappingCountTableCorr.html)
 
 ##### [Instructors](pages/instructors.md)

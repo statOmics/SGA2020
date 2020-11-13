@@ -221,18 +221,18 @@ $(document).ready(function () {
 <pre><code>## Loading required package: Biobase</code></pre>
 <pre><code>## Loading required package: BiocGenerics</code></pre>
 <pre><code>## Loading required package: parallel</code></pre>
-<pre><code>## 
+<pre><code>##
 ## Attaching package: 'BiocGenerics'</code></pre>
 <pre><code>## The following objects are masked from 'package:parallel':
-## 
+##
 ##     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
 ##     clusterExport, clusterMap, parApply, parCapply, parLapply,
 ##     parLapplyLB, parRapply, parSapply, parSapplyLB</code></pre>
 <pre><code>## The following objects are masked from 'package:stats':
-## 
+##
 ##     IQR, mad, sd, var, xtabs</code></pre>
 <pre><code>## The following objects are masked from 'package:base':
-## 
+##
 ##     Filter, Find, Map, Position, Reduce, anyDuplicated, append,
 ##     as.data.frame, basename, cbind, colnames, dirname, do.call,
 ##     duplicated, eval, evalq, get, grep, grepl, intersect,
@@ -241,7 +241,7 @@ $(document).ready(function () {
 ##     setdiff, sort, table, tapply, union, unique, unsplit, which,
 ##     which.max, which.min</code></pre>
 <pre><code>## Welcome to Bioconductor
-## 
+##
 ##     Vignettes contain introductory material; view with
 ##     'browseVignettes()'. To cite Bioconductor, see
 ##     'citation(&quot;Biobase&quot;)', and for packages 'citation(&quot;pkgname&quot;)'.</code></pre>
@@ -540,18 +540,18 @@ bamfls&lt;-paste0(bamDir,&quot;/&quot;,substr(basename(fls1),1,10),&quot;.bam&qu
 </div>
 <div id="readmapping" class="section level2">
 <h2><span class="header-section-number">4.2</span> Readmapping</h2>
-<p>The offset for the phred scores is 64. We find info on illumina incoding in quality control step of fastQC.</p>
+<p>The offset for the phred scores is 33. We find info on illumina incoding in quality control step of fastQC.</p>
 <pre class="r"><code>phredOffset&lt;-33
 align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quot;,output_format=&quot;BAM&quot;,output_file=bamfls,phredOffset=phredOffset)</code></pre>
-<pre><code>## 
-##         ==========     _____ _    _ ____  _____  ______          _____  
-##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+<pre><code>##
+##         ==========     _____ _    _ ____  _____  ______          _____
+##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \
 ##           =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
 ##             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |
 ##               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
 ##         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
 ##        Rsubread 1.34.7
-## 
+##
 ## //================================= setting ==================================\\
 ## ||                                                                            ||
 ## || Function      : Read alignment (RNA-Seq)                                   ||
@@ -575,7 +575,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## || Max alignments per multi-mapping read : 1                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
+##
 ## //================ Running (08-Nov-2019 10:15:52, pid=25232) =================\\
 ## ||                                                                            ||
 ## || The input file contains base space reads.                                  ||
@@ -587,7 +587,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                           Completed successfully.                          ||
 ## ||                                                                            ||
 ## \\====================================    ====================================//
-## 
+##
 ## //================================   Summary =================================\\
 ## ||                                                                            ||
 ## ||             Total fragments : 7097                                         ||
@@ -610,16 +610,16 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                Running time : 0.1 minutes                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
-## 
-##         ==========     _____ _    _ ____  _____  ______          _____  
-##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+##
+##
+##         ==========     _____ _    _ ____  _____  ______          _____
+##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \
 ##           =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
 ##             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |
 ##               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
 ##         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
 ##        Rsubread 1.34.7
-## 
+##
 ## //================================= setting ==================================\\
 ## ||                                                                            ||
 ## || Function      : Read alignment (RNA-Seq)                                   ||
@@ -643,7 +643,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## || Max alignments per multi-mapping read : 1                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
+##
 ## //================ Running (08-Nov-2019 10:15:59, pid=25232) =================\\
 ## ||                                                                            ||
 ## || The input file contains base space reads.                                  ||
@@ -655,7 +655,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                           Completed successfully.                          ||
 ## ||                                                                            ||
 ## \\====================================    ====================================//
-## 
+##
 ## //================================   Summary =================================\\
 ## ||                                                                            ||
 ## ||             Total fragments : 7168                                         ||
@@ -678,16 +678,16 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                Running time : 0.1 minutes                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
-## 
-##         ==========     _____ _    _ ____  _____  ______          _____  
-##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+##
+##
+##         ==========     _____ _    _ ____  _____  ______          _____
+##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \
 ##           =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
 ##             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |
 ##               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
 ##         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
 ##        Rsubread 1.34.7
-## 
+##
 ## //================================= setting ==================================\\
 ## ||                                                                            ||
 ## || Function      : Read alignment (RNA-Seq)                                   ||
@@ -711,7 +711,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## || Max alignments per multi-mapping read : 1                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
+##
 ## //================ Running (08-Nov-2019 10:16:03, pid=25232) =================\\
 ## ||                                                                            ||
 ## || The input file contains base space reads.                                  ||
@@ -723,7 +723,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                           Completed successfully.                          ||
 ## ||                                                                            ||
 ## \\====================================    ====================================//
-## 
+##
 ## //================================   Summary =================================\\
 ## ||                                                                            ||
 ## ||             Total fragments : 8478                                         ||
@@ -746,16 +746,16 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                Running time : 0.1 minutes                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
-## 
-##         ==========     _____ _    _ ____  _____  ______          _____  
-##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+##
+##
+##         ==========     _____ _    _ ____  _____  ______          _____
+##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \
 ##           =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
 ##             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |
 ##               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
 ##         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
 ##        Rsubread 1.34.7
-## 
+##
 ## //================================= setting ==================================\\
 ## ||                                                                            ||
 ## || Function      : Read alignment (RNA-Seq)                                   ||
@@ -779,7 +779,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## || Max alignments per multi-mapping read : 1                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
+##
 ## //================ Running (08-Nov-2019 10:16:06, pid=25232) =================\\
 ## ||                                                                            ||
 ## || The input file contains base space reads.                                  ||
@@ -791,7 +791,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                           Completed successfully.                          ||
 ## ||                                                                            ||
 ## \\====================================    ====================================//
-## 
+##
 ## //================================   Summary =================================\\
 ## ||                                                                            ||
 ## ||             Total fragments : 7514                                         ||
@@ -814,16 +814,16 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                Running time : 0.1 minutes                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
-## 
-##         ==========     _____ _    _ ____  _____  ______          _____  
-##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+##
+##
+##         ==========     _____ _    _ ____  _____  ______          _____
+##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \
 ##           =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
 ##             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |
 ##               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
 ##         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
 ##        Rsubread 1.34.7
-## 
+##
 ## //================================= setting ==================================\\
 ## ||                                                                            ||
 ## || Function      : Read alignment (RNA-Seq)                                   ||
@@ -847,7 +847,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## || Max alignments per multi-mapping read : 1                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
+##
 ## //================ Running (08-Nov-2019 10:16:10, pid=25232) =================\\
 ## ||                                                                            ||
 ## || The input file contains base space reads.                                  ||
@@ -859,7 +859,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                           Completed successfully.                          ||
 ## ||                                                                            ||
 ## \\====================================    ====================================//
-## 
+##
 ## //================================   Summary =================================\\
 ## ||                                                                            ||
 ## ||             Total fragments : 8771                                         ||
@@ -882,16 +882,16 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                Running time : 0.1 minutes                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
-## 
-##         ==========     _____ _    _ ____  _____  ______          _____  
-##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+##
+##
+##         ==========     _____ _    _ ____  _____  ______          _____
+##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \
 ##           =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
 ##             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |
 ##               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
 ##         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
 ##        Rsubread 1.34.7
-## 
+##
 ## //================================= setting ==================================\\
 ## ||                                                                            ||
 ## || Function      : Read alignment (RNA-Seq)                                   ||
@@ -915,7 +915,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## || Max alignments per multi-mapping read : 1                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
+##
 ## //================ Running (08-Nov-2019 10:16:14, pid=25232) =================\\
 ## ||                                                                            ||
 ## || The input file contains base space reads.                                  ||
@@ -929,7 +929,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                           Completed successfully.                          ||
 ## ||                                                                            ||
 ## \\====================================    ====================================//
-## 
+##
 ## //================================   Summary =================================\\
 ## ||                                                                            ||
 ## ||             Total fragments : 11781                                        ||
@@ -952,16 +952,16 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                Running time : 0.1 minutes                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
-## 
-##         ==========     _____ _    _ ____  _____  ______          _____  
-##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+##
+##
+##         ==========     _____ _    _ ____  _____  ______          _____
+##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \
 ##           =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
 ##             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |
 ##               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
 ##         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
 ##        Rsubread 1.34.7
-## 
+##
 ## //================================= setting ==================================\\
 ## ||                                                                            ||
 ## || Function      : Read alignment (RNA-Seq)                                   ||
@@ -985,7 +985,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## || Max alignments per multi-mapping read : 1                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
+##
 ## //================ Running (08-Nov-2019 10:16:18, pid=25232) =================\\
 ## ||                                                                            ||
 ## || The input file contains base space reads.                                  ||
@@ -997,7 +997,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                           Completed successfully.                          ||
 ## ||                                                                            ||
 ## \\====================================    ====================================//
-## 
+##
 ## //================================   Summary =================================\\
 ## ||                                                                            ||
 ## ||             Total fragments : 5840                                         ||
@@ -1020,16 +1020,16 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                Running time : 0.1 minutes                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
-## 
-##         ==========     _____ _    _ ____  _____  ______          _____  
-##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+##
+##
+##         ==========     _____ _    _ ____  _____  ______          _____
+##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \
 ##           =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
 ##             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |
 ##               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
 ##         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
 ##        Rsubread 1.34.7
-## 
+##
 ## //================================= setting ==================================\\
 ## ||                                                                            ||
 ## || Function      : Read alignment (RNA-Seq)                                   ||
@@ -1053,7 +1053,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## || Max alignments per multi-mapping read : 1                                  ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
+##
 ## //================ Running (08-Nov-2019 10:16:22, pid=25232) =================\\
 ## ||                                                                            ||
 ## || The input file contains base space reads.                                  ||
@@ -1067,7 +1067,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||                           Completed successfully.                          ||
 ## ||                                                                            ||
 ## \\====================================    ====================================//
-## 
+##
 ## //================================   Summary =================================\\
 ## ||                                                                            ||
 ## ||             Total fragments : 10163                                        ||
@@ -1133,17 +1133,17 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 </div>
 <div id="counttable" class="section level1">
 <h1><span class="header-section-number">5</span> CountTable</h1>
-<pre class="r"><code>fcAirway&lt;-featureCounts(files=bamfls,annot.ext=&quot;Homo_sapiens.GRCh38.98.gtf.gz&quot;,isGTFAnnotationFile=TRUE, GTF.featureType = &quot;exon&quot;, GTF.attrType = &quot;gene_id&quot;, useMetaFeatures = TRUE, strandSpecific = 0, 
+<pre class="r"><code>fcAirway&lt;-featureCounts(files=bamfls,annot.ext=&quot;Homo_sapiens.GRCh38.98.gtf.gz&quot;,isGTFAnnotationFile=TRUE, GTF.featureType = &quot;exon&quot;, GTF.attrType = &quot;gene_id&quot;, useMetaFeatures = TRUE, strandSpecific = 0,
                     isPairedEnd = TRUE)</code></pre>
-<pre><code>## 
-##         ==========     _____ _    _ ____  _____  ______          _____  
-##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \ 
+<pre><code>##
+##         ==========     _____ _    _ ____  _____  ______          _____
+##         =====         / ____| |  | |  _ \|  __ \|  ____|   /\   |  __ \
 ##           =====      | (___ | |  | | |_) | |__) | |__     /  \  | |  | |
 ##             ====      \___ \| |  | |  _ &lt;|  _  /|  __|   / /\ \ | |  | |
 ##               ====    ____) | |__| | |_) | | \ \| |____ / ____ \| |__| |
 ##         ==========   |_____/ \____/|____/|_|  \_\______/_/    \_\_____/
 ##        Rsubread 1.34.7
-## 
+##
 ## //========================== featureCounts setting ===========================\\
 ## ||                                                                            ||
 ## ||             Input files : 8 BAM files                                      ||
@@ -1169,7 +1169,7 @@ align(index=indexName,readfile1=fls1,readfile2=fls2,input_format=&quot;FASTQ&quo
 ## ||        Both ends mapped : not required                                     ||
 ## ||                                                                            ||
 ## \\============================================================================//
-## 
+##
 ## //================================= Running ==================================\\
 ## ||                                                                            ||
 ## || Load annotation file Homo_sapiens.GRCh38.98.gtf.gz ...                     ||
