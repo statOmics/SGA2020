@@ -131,7 +131,7 @@ Because we use the canonical model parameters the observed  Fisher information m
 Indeed, the observed Fisher information matrix is not depending on the observations, but only on the design and the variance of the data (via the weights).
 Hence, Newton-Raphson is equivalent to Fisher scoring when the canonical link function is used.
 
-Note, that the Fisher matrix, - second derivative (or hessian) of the likelihood to the model parameters, is also the inverse of the variance covariance matrix of the model parameters. It is thus related to the precision.
+Note, that the Fisher matrix, minus second derivative (or hessian) of the likelihood to the model parameters, is also the inverse of the variance covariance matrix of the model parameters. It is thus related to the precision.
 
 #### Iteratively Reweighted Least Squares (IRLS).
 
@@ -154,7 +154,7 @@ In each iteration we will update $\mathbf{z}$, the weights $\mathbf{W}$ and the 
 For Poisson data $\frac{\partial \eta}{\partial \mu}=\frac{\partial\log \mu}{\partial\mu}=\frac{1}{\mu}=\exp(-\eta)$ and $\mathbf{W}=\mathbf{A}\frac{\partial{\mu}}{{\partial \eta}}$ is a diagonal matrix with $[\frac{\partial{\mu_i}}{{\partial \eta_i}}]_{ii}=[\mu_i]_{ii}=[\exp(\eta_i)]_{ii}$ on its diagonal elements.
 
 
-###Variance-covariance matrix of the model parameters?
+### Variance-covariance matrix of the model parameters?
 In the IRWLS algorithm, the data is weighted according to the variance of $\mathbf{Y}$. We correct for the fact that the data are heteroscedastic.
 Count data have a mean variance relation (e.g. in Poisson case $\text{E}\left[Y \right]=\text{var}\left[Y \right]=\mu$).
 The IRWLS also corrects for the scale parameter $\phi$ in $\mathbf{W}$. (Note that the scale parameter for Poisson is $\phi=1$).
