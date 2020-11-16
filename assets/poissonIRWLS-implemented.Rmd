@@ -1,8 +1,15 @@
 ---
 title: "Poisson IRWLS"
 author: "Lieven Clement"
+date: "statOmics, Ghent University (https://statomics.github.io)"
 output:
-  BiocStyle::html_document
+    html_document:
+      code_download: true
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
 ---
 
 # Poisson model family
@@ -33,20 +40,20 @@ $$y_i \sim \exp\left\{y_i\log(\mu_i) - \mu_i - \log(y_i!)\right\}$$
 
 
 ## Poisson Log likelihood
-For one observation: 
-$$l(\mu_i \vert y_i) = y_i \log \mu_i - \mu_i - \log y_i!$$ 
-$$l(\mu_i \vert y_i) = y_i \theta_i - e^{\theta_i} - \log y_i!$$ 
+For one observation:
+$$l(\mu_i \vert y_i) = y_i \log \mu_i - \mu_i - \log y_i!$$
+$$l(\mu_i \vert y_i) = y_i \theta_i - e^{\theta_i} - \log y_i!$$
 
 - Note that $\theta_i = \eta_i$. The canonical parameter for the poisson equals the linear predictor!
   $$\theta_i=\eta_i=\mathbf{x}_i^t\mathbf{\beta}$$
 
 Log-likelihood for all observations, given that they are independent:
-$$l(\mathbf{\mu} \vert \mathbf{y}) = \sum\limits_{i=1}^n \left\{ y_i \theta_i - e^{\theta_i} - \log y_i!\right\}$$ 
+$$l(\mathbf{\mu} \vert \mathbf{y}) = \sum\limits_{i=1}^n \left\{ y_i \theta_i - e^{\theta_i} - \log y_i!\right\}$$
 
 ## Poisson parameter estimation
 
-Maximum likelihood: choose the parameters $\mathbf{\beta}$ so that the likelihood to observe the sample under the statistical model becomes maximum. 
-$$\text{argmax}_{\mathbf{\beta}} l(\mathbf{\mu} \vert \mathbf{y})$$ 
+Maximum likelihood: choose the parameters $\mathbf{\beta}$ so that the likelihood to observe the sample under the statistical model becomes maximum.
+$$\text{argmax}_{\mathbf{\beta}} l(\mathbf{\mu} \vert \mathbf{y})$$
 
 Maximization $\rightarrow$ set first derivative of likelihood to betas equal to zero. First derivative of likelihood is also called the Score function ($S(\mathbf{\theta})$):
 
@@ -63,10 +70,10 @@ For poisson data: $a(\phi)b^{\prime\prime}(\theta)=\mu$ and $\frac{\partial \mu}
 
 $$ S(\beta)=\mathbf{X}^T \left\{\mathbf{Y}-\mathbf{\mu}\right\}$$
 
-Parameter estimator $\hat{\mathbf{\beta}}$: Find  $\hat{\mathbf{\beta}}$ so that 
+Parameter estimator $\hat{\mathbf{\beta}}$: Find  $\hat{\mathbf{\beta}}$ so that
 $$ S(\beta) = \mathbf{0}$$
 
-Problem $\mathbf{\mu}=  b^\prime(\theta)$. 
+Problem $\mathbf{\mu}=  b^\prime(\theta)$.
 For Poisson this becomes $\mathbf{\mu}=  \exp(\mathbf{\theta}) = \exp(\mathbf{\eta}) = \exp(\mathbf{X\beta})$!
 Score equation is nonlinear in the model parameters!
 $\rightarrow$ Find roots of score equation by using Newton-Raphson method.
@@ -81,7 +88,7 @@ $\rightarrow$ Find roots of score equation by using Newton-Raphson method.
 6. Iterate from step 2 - 5 until convergence.
 
 #### Derivative of score equation
-We have to implement an interative algorithm for optimisation. To make things tractable we will act as if $\mathbf{A}$ is known and fix it using the current values of $\boldsymbol{\beta}^k$. Note, that for Poisson regression $\mathbf{A}$ is constant and equals the identity matrix. 
+We have to implement an interative algorithm for optimisation. To make things tractable we will act as if $\mathbf{A}$ is known and fix it using the current values of $\boldsymbol{\beta}^k$. Note, that for Poisson regression $\mathbf{A}$ is constant and equals the identity matrix.
 
 \begin{eqnarray*}
 \frac{\partial S(\mathbf{\beta})}{\partial \mathbf{\beta}} &=& \frac{ \mathbf{X}^T\mathbf{A} \left\{\mathbf{Y}-\boldsymbol{\mu}\right\}}{\partial \mathbf{\beta}}\\
@@ -113,20 +120,20 @@ S(\mathbf{\beta}^k)&=&\mathbf{\alpha}_0+S^\prime\vert_{\mathbf{\beta}^k} \mathbf
 \end{eqnarray*}
 
 - Get $\mathbf{\beta}_{k+1}$
-  
+
 \begin{eqnarray*}
 \mathbf{\beta}^{k+1}&=&\mathbf{\beta}^k-\left(S^{\prime}\vert_{\mathbf{\beta}^{k}}\right)^{-1}S(\mathbf{\beta}^k)\\
 \mathbf{\beta}^{k+1}&=&\mathbf{\beta}^k+ \left(\mathbf{X}^T\mathbf{WX}\right)^{-1} S(\mathbf{\beta}^k)
 \end{eqnarray*}
 
-With $J(\mathbf{\beta})=I(\mathbf{\beta})=\mathbf{X}^T\mathbf{WX}$  the Fisher information matrix. 
+With $J(\mathbf{\beta})=I(\mathbf{\beta})=\mathbf{X}^T\mathbf{WX}$  the Fisher information matrix.
 Because we use the canonical model parameters the observed  Fisher information matrix equals the expected  Fisher information matrix $J(\mathbf{\beta})=I(\mathbf{\beta})$.
-Indeed, the observed Fisher information matrix is not depending on the observations, but only on the design and the variance of the data (via the weights). 
-Hence, Newton-Raphson is equivalent to Fisher scoring when the canonical link function is used. 
+Indeed, the observed Fisher information matrix is not depending on the observations, but only on the design and the variance of the data (via the weights).
+Hence, Newton-Raphson is equivalent to Fisher scoring when the canonical link function is used.
 
 Note, that the Fisher matrix, - second derivative (or hessian) of the likelihood to the model parameters, is also the inverse of the variance covariance matrix of the model parameters. It is thus related to the precision.
 
-#### Iteratively Reweighted Least Squares (IRLS). 
+#### Iteratively Reweighted Least Squares (IRLS).
 
 We can rewrite Newton Raphson or Fisher scoring as IRLS.
 
@@ -141,27 +148,27 @@ We can rewrite Newton Raphson or Fisher scoring as IRLS.
 
 with $\mathbf{z}=\left[\mathbf{X}\mathbf{\beta}^k + \frac{\partial \eta}{\partial \mu}  \left(\mathbf{Y}-\mathbf{\mu}\right)\right]$
 
-So we can fit the model by performing iterative regressions of the pseudo data $\mathbf{z}$ on $\mathbf{X}$. 
-In each iteration we will update $\mathbf{z}$, the weights $\mathbf{W}$ and the model parameters. 
+So we can fit the model by performing iterative regressions of the pseudo data $\mathbf{z}$ on $\mathbf{X}$.
+In each iteration we will update $\mathbf{z}$, the weights $\mathbf{W}$ and the model parameters.
 
-For Poisson data $\frac{\partial \eta}{\partial \mu}=\frac{\partial\log \mu}{\partial\mu}=\frac{1}{\mu}=\exp(-\eta)$ and $\mathbf{W}=\mathbf{A}\frac{\partial{\mu}}{{\partial \eta}}$ is a diagonal matrix with $[\frac{\partial{\mu_i}}{{\partial \eta_i}}]_{ii}=[\mu_i]_{ii}=[\exp(\eta_i)]_{ii}$ on its diagonal elements. 
+For Poisson data $\frac{\partial \eta}{\partial \mu}=\frac{\partial\log \mu}{\partial\mu}=\frac{1}{\mu}=\exp(-\eta)$ and $\mathbf{W}=\mathbf{A}\frac{\partial{\mu}}{{\partial \eta}}$ is a diagonal matrix with $[\frac{\partial{\mu_i}}{{\partial \eta_i}}]_{ii}=[\mu_i]_{ii}=[\exp(\eta_i)]_{ii}$ on its diagonal elements.
 
 
-###Variance-covariance matrix of the model parameters? 
-In the IRWLS algorithm, the data is weighted according to the variance of $\mathbf{Y}$. We correct for the fact that the data are heteroscedastic. 
+###Variance-covariance matrix of the model parameters?
+In the IRWLS algorithm, the data is weighted according to the variance of $\mathbf{Y}$. We correct for the fact that the data are heteroscedastic.
 Count data have a mean variance relation (e.g. in Poisson case $\text{E}\left[Y \right]=\text{var}\left[Y \right]=\mu$).
-The IRWLS also corrects for the scale parameter $\phi$ in $\mathbf{W}$. (Note that the scale parameter for Poisson is $\phi=1$). 
+The IRWLS also corrects for the scale parameter $\phi$ in $\mathbf{W}$. (Note that the scale parameter for Poisson is $\phi=1$).
 
-So IRWLS the variance-covariance matrix for the model parameter equals 
+So IRWLS the variance-covariance matrix for the model parameter equals
 $$\mathbf{\Sigma}_{\hat\beta}=\left(\mathbf{X}^T\mathbf{WX}\right)^{-1}.$$
 
-Note, that the Fisher Information Matrix equals the inverse of the variance-covariance matrix of the experiment. 
+Note, that the Fisher Information Matrix equals the inverse of the variance-covariance matrix of the experiment.
 The larger the Fisher Information Matrix the more information we have on the experiment to estimate the model parameters.
 FIM $\uparrow$, precision $\uparrow$, $\text{SE}\downarrow$
 
 # Simulate poisson data
 
-- We simulate data for 100 observations. 
+- We simulate data for 100 observations.
 - Covariates x are simulated from normal distribution
 - The $\beta$ are chosen at $\beta_0=2$, $\beta_1=0.8$, $\beta_2=1.2$
 
@@ -176,7 +183,7 @@ plot(betasTrue,ylab=expression(beta),ylim=c(0,4),pch=19,type="b")
 
 
 # Initial estimate
-This is a very poor initial estimate used to illustrate the algorithm. 
+This is a very poor initial estimate used to illustrate the algorithm.
 Otherwise convergence for this simple example is way too quick
 
 ```{r}
@@ -195,7 +202,7 @@ $$z_i= \eta_i + e^{-\eta_i} y_i -1$$
 $$[w_{ii}]= var_{y_i}^{-1} \left(\frac{\partial \mu}{\partial \eta}\right)^2$$
 $$[w_{ii}]= e^{\eta_i}$$
 
-## Run this update step multiple times 
+## Run this update step multiple times
 First 3 times (colors are black 0, red iteration 1, green iteration 2, blue iteration 3)
 
 ```{r}
@@ -238,16 +245,16 @@ eta<-xhlp%*%betas
 
 ## Evaluation Stopping Criterion
 
-- Residual deviance: Is 2 log of LR between best possible fit and current fit 
+- Residual deviance: Is 2 log of LR between best possible fit and current fit
 $$LR=\frac{L_\text{best}}{L_\text{current}}$$
 $$D=2 (\log L_\text{best}- \log L_\text{current})$$
 $$D=2 (l_\text{best}-l_\text{current})$$
-- Best fit: $\mu=y$ 
-- Optimal poisson: 
+- Best fit: $\mu=y$
+- Optimal poisson:
 $$ l_\text{best}=\sum\left[y_i \log(y_i) - y_i - \log\left(y_i!\right)\right]$$
 - Current fit
 $$ l_\text{current}=\sum \left[y_i \eta_i -e^{\eta_i} - log\left(y_i!\right)\right]$$
-- Deviance D: 
+- Deviance D:
 $$D = 2 \sum \left[ y_i log(y_i) - y_i \eta_i - (y_i -e^{\eta_i})\right]$$
 - Problem to calculate it if y=0 but by apply l'Hopital's rule we know
 $$\lim_{y_i \to 0} y_i \log(y_i) =0$$
@@ -264,7 +271,7 @@ devianceOld<-1e30
 ```
 
 
-# Run this update step multiple times until convergence 
+# Run this update step multiple times until convergence
 ```{r}
 plot(betasTrue,ylab=expression(beta),ylim=c(0,4),pch=19,type="b")
 lines(betas,type="b",lty=2)
@@ -287,7 +294,7 @@ eta<-lmUpdate$fitted
 betas<-lmUpdate$coef
 lines(betas,type="b",col=iteration+1,pch=iteration,lty=2)
 
-#criterion for convergence 
+#criterion for convergence
 devianceOld<-deviance
 deviance<-2*sum(ylogy(y)-y*eta-(y-exp(eta)))
 cat("iteration",iteration,"Deviance Old",devianceOld,"Deviance", deviance,"\n")
