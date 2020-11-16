@@ -111,7 +111,16 @@ A primer to R and Data visualisation  in R can be found in:
 
       - Paired-end sequencing was performed on primary cultures from parathyroid tumors of 4 patients at 2 time points over 3 conditions (control, treatment with diarylpropionitrile (DPN) and treatment with 4-hydroxytamoxifen (OHT)). DPN is a selective estrogen receptor agonist and OHT is a selective estrogen receptor modulator. One sample (patient 4, 24 hours, control) was omitted by the paper authors due to low quality. Data, the count table and information on the experiment is available at http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE37211. It is not required to do the read mapping!
 
-3. Solutions
+3. Technical details on transcriptomics with next generation sequencing. Generalized linear models are introduced in the slides and bulk RNA-seq tools via their corresponding papers
+
+    - [slides on GLM](assets/rnaseq2.pdf)
+    - Poisson GLM and parameter estimation: [Rmd](https://raw.githubusercontent.com/statOmics/SGA2019/gh-pages/assets/poissonIRWLS-implemented.Rmd), [html](assets/poissonIRWLS-implemented.html)
+    - [edgeR: Negative Binomial](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3378882/)
+    - [DESeq2](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4302049/)
+    - [voom](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4053721/)
+    - [edgeR: Quasi Negative Binomial](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.362.9634&rep=rep1&type=pdf)
+
+4. Solutions
 
     - Airway Example: [GenomeIndex](assets/airwayGenomeIndex.html), [read mapping and count table](assets/airwayMappingCountTableCorr.html)
 

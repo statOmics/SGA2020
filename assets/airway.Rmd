@@ -143,3 +143,73 @@ Another way of representing the results of a differential expression analysis is
 library(pheatmap)
 pheatmap(cpm(dge,log=TRUE)[rownames(tt$table)[1:30],])
 ```
+
+# Issues
+
+We find a huge number of DE genes. If this is the case it is always important to carefully check your results.
+
+## p-values
+
+```{r}
+ttAll$table %>%
+  ggplot(aes(x=PValue)) +
+  geom_histogram()
+```
+
+We indeed see a large enrichment of small p-values.
+
+We know that the inference is only asymptotically valid, i.e. for large experiments.
+
+EdgeR is using a likelihood ratio test for statistical inference. The null distribution of this test statistic follows an asymptotic chi-square distribution.
+If we test for a single contrast (e.g. one model parameter or one linear combination of model parameters) then the chi-square distribution has one degree of freedom and you will perform a two-sided test.
+
+We also know that a chi-square distribution with one degree of freedom is equivalent to the square of a normal distribution.
+So we can easily convert the chi-square test statistic in a z statistic which should be normally distributed under the null.
+
+The normal distribution is very useful for diagnostics because we are used to work with it. If we have two sided test statistics we can always convert the results into a z-statistic.
+
+1. We can start of the two-sided p-values.
+2. We devide the p-values by two to have the probability in one of the tails
+3. We calculate which quantile of the normal corresponds to it
+4. We give the z-value the sign of our contrast.
+
+```{r}
+ttAll$table <- ttAll$table %>%
+  mutate(z = sign(logFC) * abs(qnorm(PValue/2)))
+
+ttAll$table %>%
+    ggplot(aes(x=z)) +
+    geom_histogram()  
+```
+
+We can empirically estimate the null distribution using the locfdr package.
+The locfdr package allows you to calculate local fdrs.
+It uses the two groups model:
+
+\[f(z) = \pi_0f_0(z) + (1-\pi_0) f_1(z)\]
+
+The local fdr or posterior probability that the gene with a certain test statistic z is a false positive then becomes
+
+\[lfdr = \frac{\pi_0 f_0(z)}{f(z)} \]
+
+Efron suggests to use a cutoff for the lfdr of 20%. So we return all genes for which the probability that they are false positives is below 20%. He claims that this corresponds to a conventional FDR of about 5% in the set that you return.
+
+It can be shown that the FDR:
+
+\[
+FDR = E[lfdr] \approx \frac{\sum\limits_{k \in DE-set} lfdr_k}{n_DE}\]
+
+We can also estimate the global FDR by simply calculating the average lfdr in the set that we return.
+
+```{r}
+library(locfdr)
+ttAll$table <- ttAll$table %>%
+  mutate(lfdr = locfdr(z)$lfdr)
+```
+
+In the plot we see the histogram of the z-values.
+The green line is the estimate of the marginal distribution $f(z)$.
+The blue line is the estimate of the null distribution.
+We see that null distribution appears to be much broader than the standard normal.
+
+We see that the marginal distribution (green distribution) is not estimated well. We also get a warning message that indicates that we can increase the degrees of freedom 
