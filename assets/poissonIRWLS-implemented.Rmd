@@ -94,7 +94,7 @@ We have to implement an interative algorithm for optimisation. To make things tr
 \frac{\partial S(\mathbf{\beta})}{\partial \mathbf{\beta}} &=& \frac{ \mathbf{X}^T\mathbf{A} \left\{\mathbf{Y}-\boldsymbol{\mu}\right\}}{\partial \mathbf{\beta}}\\
 &=& - \mathbf{X}^T \mathbf{A}\left[
 \begin{array}{cccc} \frac{\partial \mu_1}{\partial \eta_1} &0&\ldots&0\\
- 0&\frac{\partial \mu_2}{\partial eta_2} &\ldots&0\\
+ 0&\frac{\partial \mu_2}{\partial \eta_2} &\ldots&0\\
 \vdots&\vdots&\vdots&\vdots\\
 0&0&\ldots& \frac{\partial \mu_n}{\partial \eta_n}\\
 \end{array}\right] \frac{\partial \mathbf{\eta}}{\partial \mathbf{\beta}}\\
