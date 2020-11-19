@@ -31,7 +31,7 @@ library(edgeR)
 library(tidyverse)
 ```
 
-#Read featurecounts object
+# Read featurecounts object
 
 We import the featurecounts object that we have stored.
 
@@ -97,7 +97,7 @@ One way to reduce dimensionality is the use of multidimensional scaling (MDS). F
 edgeR contains a function plotMDS, which operates on a DGEList object and generates a two-dimensional MDS representation of the samples. The default distance between two samples can be interpreted as the "typical" log fold change between the two samples, for the genes that are most different between them (by default, the top 500 genes, but this can be modified). We generate an MDS plot from the DGEList object dge, coloring by the treatment and using different plot symbols for different cell lines.
 
 ```{r}
-plotMDS(dge, top = 500,col=as.double(target$cellType))
+plotMDS(dge, top = 500,col=as.double(target$cellLine))
 ```
 
 
@@ -123,8 +123,10 @@ lrt <- glmLRT(fit, coef = "treatmentDexamethasone")
 ttAll <- topTags(lrt, n = nrow(dge)) # all genes
 hist(ttAll$table$PValue)
 tt <- topTags(lrt, n = nrow(dge), p.value = 0.05) # genes with adj.p<0.05
-tt
+nrow(tt)
 ```
+
+There are `r nrow(tt)` genes statistiscally significant at the 5% FDR level.
 
 ### Plots
 
@@ -132,7 +134,7 @@ We first make a volcanoplot and an MA plot.
 
 ```{r}
 library(ggplot2)
-volcano<- ggplot(ttAll$table,aes(x=logFC,y=-log10(PValue),color=FDR<0.05)) + geom_point() + scale_color_manual(values=c("black","red"))
+volcano <- ggplot(ttAll$table,aes(x=logFC,y=-log10(PValue),color=FDR<0.05)) + geom_point() + scale_color_manual(values=c("black","red"))
 volcano
 plotSmear(lrt, de.tags = row.names(tt$table))
 ```
@@ -161,15 +163,42 @@ We indeed see a large enrichment of small p-values.
 We know that the inference is only asymptotically valid, i.e. for large experiments.
 
 EdgeR is using a likelihood ratio test for statistical inference. The null distribution of this test statistic follows an asymptotic chi-square distribution.
+
 If we test for a single contrast (e.g. one model parameter or one linear combination of model parameters) then the chi-square distribution has one degree of freedom and you will perform a two-sided test.
 
-We also know that a chi-square distribution with one degree of freedom is equivalent to the square of a normal distribution.
-So we can easily convert the chi-square test statistic in a z statistic which should be normally distributed under the null.
+## Empirical null distribution
 
-The normal distribution is very useful for diagnostics because we are used to work with it. If we have two sided test statistics we can always convert the results into a z-statistic.
+Efron 2008 relaxes the use of a theoretical null distribution for assessing statistical significance.
 
-1. We can start of the two-sided p-values.
-2. We devide the p-values by two to have the probability in one of the tails
+- He shows that we can exploit the massive parallel data structure of high throughput experiments to estimate the empirical null distribution.
+
+- He assumes that the test statistics follow a normal distribution under the null, but proposes to estimate the location and the variance empirically.
+
+Assuming that the test statistic has a standard normal null distribution is not restrictive. For example, suppose that $t$-tests have been applied and that the null distribution is $t_d$, with $d$ representing the degrees of freedom. Let $F_{td}$ denote the distribution function of $t_d$ and let $\Phi$ denote the distribution function of the standard normal distribution. If $T$ denotes the $t$-test statistic, then, under the null hypothesis,
+\[
+  T \sim t_d
+\]
+and hence
+\[
+  F_{td}(T) \sim U[0,1]
+\]
+and
+\[
+  Z = \Phi^{-1}(F_{td}(T)) \sim N(0,1).
+\]
+
+If all $m$ null hypotheses are true, then each of the $Z_g$ is $N(0,1)$ and the set of $m$ calculated $z_g$ test statistics may be considered as a sample from $N(0,1)$. Hence, under these conditions we expect the histogram of the $m$ $z_g$'s to look like the density of the null distribution.
+
+If a LRT test is conducted for a single contrast, we can obtain the corresponding $Z_g$ by converting the p-values into quantiles of the normal, i.e.
+
+$z_g = \Phi^{-1} (1-p/2) \times \text{sign}(FC)$
+
+The normal distribution is very useful for diagnostics because we are used to work with it.
+
+So in general we
+
+1. Start of the two-sided p-values.
+2. We divide the p-values by two to have the probability in one of the tails
 3. We calculate which quantile of the normal corresponds to it
 4. We give the z-value the sign of our contrast.
 
@@ -178,9 +207,16 @@ ttAll$table <- ttAll$table %>%
   mutate(z = sign(logFC) * abs(qnorm(PValue/2)))
 
 ttAll$table %>%
-    ggplot(aes(x=z)) +
-    geom_histogram()  
+  ggplot(aes(x=z)) +
+  geom_histogram(aes(y = ..density..), color = "black") +
+  stat_function(fun = dnorm,
+      args = list(
+    mean = 0,
+    sd=1)
+  )
 ```
+
+The histogram clearly shows that the theoretical null distribution N(0,1) does not seen to match the null distribution in the airway dataset.
 
 We can empirically estimate the null distribution using the locfdr package.
 The locfdr package allows you to calculate local fdrs.
@@ -197,19 +233,156 @@ Efron suggests to use a cutoff for the lfdr of 20%. So we return all genes for w
 It can be shown that the FDR:
 
 \[
-FDR = E[lfdr] \approx \frac{\sum\limits_{k \in DE-set} lfdr_k}{n_DE}\]
+FDR = E[lfdr] \approx \frac{\sum\limits_{k \in DE-set} lfdr_k}{n_\text{DE}}
+\]
 
 We can also estimate the global FDR by simply calculating the average lfdr in the set that we return.
 
 ```{r}
 library(locfdr)
 ttAll$table <- ttAll$table %>%
-  mutate(lfdr = locfdr(z)$lfdr)
+  mutate(lfdr = locfdr(z)$fdr)
 ```
 
 In the plot we see the histogram of the z-values.
-The green line is the estimate of the marginal distribution $f(z)$.
-The blue line is the estimate of the null distribution.
-We see that null distribution appears to be much broader than the standard normal.
 
-We see that the marginal distribution (green distribution) is not estimated well. We also get a warning message that indicates that we can increase the degrees of freedom 
+- The green line is the estimate of the marginal distribution $f(z)$. A non-parameteric density estimator is used for this purpose.
+- The blue line is the estimate of the null distribution.
+- We see that null distribution appears to be much broader than the standard normal and it shows a slight shift.
+- We see that the marginal distribution (green distribution) is not estimated well.
+- We also get a warning message that indicates that we can increase the degrees of freedom.
+
+We re-estimate $f(z)$ by using more degrees of freedom, e.g. `df = 20`.
+
+```{r}
+ttAll$table <- ttAll$table %>%
+  mutate(lfdr = locfdr(z, df = 20)$fdr)
+```
+
+
+
+Estimated FDR corresponding to the set of genes with lfdr < 0.2 and number of significant genes with lfdr < 0.2?
+
+```{r}
+ttAll$table %>%
+  filter(lfdr < 0.2) %>%
+  summarize(
+    FDR = mean(lfdr, na.rm = TRUE),
+    nSig = lfdr %>%
+      is.na %>%
+      `!` %>%
+      sum)
+```
+
+Note, that
+
+- the FDR of the set that is returned is indeed close to 0.5.
+- the number of significant genes has been reduced considerably.
+- It is very important to evaluate the fit of the null and marginal distribution in the plot.
+
+If you would like to opt to use the FDR method of Benjamini and Hochberg, you also could convert the z-values back in p-values by using a normal $N(\hat \mu, \hat \sigma^2)$, where we use the estimated parameters for the null distribution by locfdr.
+
+```{r}
+h <- ttAll$table %>%
+  pull(z) %>%
+  locfdr(df = 20, plot=FALSE)
+
+ttAll$table <- ttAll$table %>%
+  mutate(pEmp = pnorm(
+    abs(z),
+    mean = h$fp0["mlest","delta"],
+    sd = h$fp0["mlest","sigma"],
+    lower = FALSE) * 2
+    ) %>%
+  mutate(pAdjEmp = p.adjust(
+    pEmp,
+    method="BH")
+    )
+
+ttAll$table %>%
+  filter(pAdjEmp < 0.05) %>%
+  nrow
+```
+
+We observe that the number of significant genes reduces to about the same amount as with the lfdr method of Efron.
+We, however, did not have to use a density estimator for the marginal cumulative distribution function of the test statistics. Instead, the BH method uses the empirical distribution of the statistics.
+
+##  Assess why deviations from the null occur?
+
+### Failed mathematical assumptions?
+
+If we permute the gene expression data of all observations differently for every gene, we simulate expressions under the null and breakup the correlation structure between the genes.
+
+```{r}
+set.seed(1004)
+dgePermAll <- dge
+dgePermAll$counts <- apply(dge$counts, 1, sample)  %>% t
+dgePermAll$samples$lib.size <-  dgePermAll$counts %>% colSums
+dgePermAll <- calcNormFactors(dgePermAll)
+
+dgePermAll <- estimateDisp(dgePermAll, design)
+plotBCV(dgePermAll)
+
+fitPermAll <- glmFit(dgePermAll, design)
+lrtPermAll <- glmLRT(fitPermAll, coef = "treatmentDexamethasone")
+ttAllPermAll <- topTags(lrtPermAll, n = nrow(dgePermAll))
+
+ttAllPermAll$table <- ttAllPermAll$table %>%
+  mutate(z = sign(logFC) * abs(qnorm(PValue/2)))
+
+ttAllPermAll$table %>%
+  ggplot(aes(x=z)) +
+  geom_histogram(aes(y = ..density..), color = "black") +
+  stat_function(fun = dnorm,
+    args = list(
+    mean = 0,
+    sd=1)
+  )
+```
+
+We observe that the null distribution is approximately following a standard normal distribution.
+There is no shift and the standard deviation in no longer larger than 1.
+
+Hence, there do not seem to be issues related to failed mathematical assumptions.
+
+### Correlation of the genes?
+
+We will now only permute the samples across conditions, but, we keep all genes together, e.g. by permuting the design matrix.
+
+This simulates data from the null and breaks the association between the predictors and potential confounders, however, correlation between the genes remains.
+
+Here, we have a block design so we will permute within block.
+We will perform a balanced permutation.
+We will select two cellines at random and we will permute the labels.
+
+```{r}
+designPerm <- design
+
+cellLine <- sample(0:3,2)
+for (i in cellLine)
+designPerm[i*2 + 1:2, 2] <- c(1,0)
+
+
+fitPermSamp <- glmFit(dge, designPerm)
+lrtPermSamp <- glmLRT(fitPermSamp, coef = "treatmentDexamethasone")
+ttAllPermSamp <- topTags(lrtPermSamp, n = nrow(dge))
+
+ttAllPermSamp$table <- ttAllPermSamp$table %>%
+  mutate(z = sign(logFC) * abs(qnorm(PValue/2)))
+
+ttAllPermSamp$table %>%
+  ggplot(aes(x=z)) +
+  geom_histogram(aes(y = ..density..), color = "black") +
+  stat_function(fun = dnorm,
+  args = list(
+    mean = 0,
+    sd=1)
+  )
+```
+
+We observe that the null distribution is approximately matching with a standard normal.
+There is no shift and the standard deviation in no longer larger than 1.
+Here, the distribution seems to be a bit more narrow than the the theoretical distribution.  
+
+So there seems to be another reason for deviations of the null, than failed mathematical assumptions and correlation between genes!
+Perhaps confounders that we do not account for?
