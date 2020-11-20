@@ -196,6 +196,4 @@ tibble(z = results$early$stat) %>%
     mean = 0,
     sd=1)
   )
-
-h <- locfdr(na.rm(results$early$stat))
 ```
