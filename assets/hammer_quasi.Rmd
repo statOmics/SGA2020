@@ -1,7 +1,15 @@
 ---
 title: "Hammer Dataset with Quasi likelihood"
+author: "Lieven Clement"
+date: "statOmics, Ghent University (https://statomics.github.io)"
 output:
-  BiocStyle::html_document
+    html_document:
+      code_download: true
+      theme: cosmo
+      toc: true
+      toc_float: true
+      highlight: tango
+      number_sections: true
 ---
 
 
@@ -12,9 +20,9 @@ library(pheatmap)
 library(RColorBrewer)
 ```
 
-#Introduction
+# Introduction
 
-Researchers assessed the effect of spinal nerve ligation (SNL) on the transcriptome of rats. In this experiment, transcriptome profiling occurred at two weeks and two months after treatment, for both the SNL group and a control group. Two biological replicates are used for every treatment - time combination. The researchers are interested in early and late effects and in genes for which the effect changes over time. 
+Researchers assessed the effect of spinal nerve ligation (SNL) on the transcriptome of rats. In this experiment, transcriptome profiling occurred at two weeks and two months after treatment, for both the SNL group and a control group. Two biological replicates are used for every treatment - time combination. The researchers are interested in early and late effects and in genes for which the effect changes over time.
 
 ```{r}
 file="http://bowtie-bio.sourceforge.net/recount/ExpressionSets/hammer_eset.RData"
@@ -32,15 +40,15 @@ pData(hammer.eset)
 hammer.eset %>% exprs %>% head
 ```
 
-#Design
+# Design
 
 
 
-The researchers are interested in an effect of the treatment at the early time point, the late timepoint and the treatment $\times$ time interaction. 
+The researchers are interested in an effect of the treatment at the early time point, the late timepoint and the treatment $\times$ time interaction.
 
 The following model is used at the gene-level to model the read count $y_{ig}$ for gene $g$ of mouse $i$.
 
-For quasi-likelihood we do not specify the full distribution, only the first two moments. 
+For quasi-likelihood we do not specify the full distribution, only the first two moments.
 
 $$
 \left\{
@@ -56,7 +64,7 @@ with $x_{snl,i}$ a dummy variable that is 1 if a mouse had the spinal nerve liga
 
 $$ \log \text{FC}^\text{2 months}_\text{snl-c}= \beta_{snl}+\beta_{snl,t2m}$$
 
-The design matrix is constructed for the linear predictor. 
+The design matrix is constructed for the linear predictor.
 
 ```{r}
 pData(hammer.eset)$time<-factor(rep(c("2m","2w"),each=4),levels = c("2w","2m"))
@@ -85,18 +93,18 @@ dge <- calcNormFactors(dge)
 dge$samples
 ```
 
-#Data exploration
+# Data exploration
 
-An MDS plot shows the leading log fold changes between the 8 samples. There is a large effect according to the SNL. Are there issues with the design? 
+An MDS plot shows the leading log fold changes between the 8 samples. There is a large effect according to the SNL. Are there issues with the design?
 
 ```{r}
 plotMDS(dge,labels=paste(hammer.eset$protocol,hammer.eset$time,sep="-"),col=as.double(hammer.eset$protocol))
 ```
 
-#Analysis
+# Analysis
 
-By replacing the glmFit function by the glmQLFit function we can perform inference with quasi likelihood. 
-We will also replace the glmLRT function by the glmQLFTest function. Note, that to estimate the additional dispersion parameter $\sigma^2_g$ we can correct for the degrees of freedom that are used to estimate the mean model parameters. This will enable us to correct for the degrees of freedom in the inference. Indeed, the glmQLFit test uses an F-distribution instead of the asymptotic $\chi^2$-distribution. 
+By replacing the glmFit function by the glmQLFit function we can perform inference with quasi likelihood.
+We will also replace the glmLRT function by the glmQLFTest function. Note, that to estimate the additional dispersion parameter $\sigma^2_g$ we can correct for the degrees of freedom that are used to estimate the mean model parameters. This will enable us to correct for the degrees of freedom in the inference. Indeed, the glmQLFit test uses an F-distribution instead of the asymptotic $\chi^2$-distribution.
 
 ```{r}
 dge <- estimateDisp(dge, design, robust=TRUE)  
@@ -105,9 +113,9 @@ fit <- glmQLFit(dge,design)
 ```
 
 
-##Early
+## Early
 
-DE at the early timepoint can be assessed by testing the null hypothesis 
+DE at the early timepoint can be assessed by testing the null hypothesis
 
 $$
 H_0: \log \text{FC}^\text{2 weeks}_\text{snl-c}=0 \rightarrow \beta_\text{snl}=0
@@ -131,10 +139,10 @@ pheatmap(cpm(dge,log=TRUE)[rownames(ttEarly$table)[1:30],],labels_col = paste(ha
 ```
 
 
-##Late
+## Late
 
-The effect of the treatment after two months can be estimated by the log fold change corresponding to the sum of the main effect and the interaction. 
-This can be assessed by testing the null hypothesis 
+The effect of the treatment after two months can be estimated by the log fold change corresponding to the sum of the main effect and the interaction.
+This can be assessed by testing the null hypothesis
 
 $$
 H_0: \log \text{FC}^\text{2 months}_\text{snl-c}=0 \rightarrow \beta_\text{snl}+\beta_\text{snl,t2m}=0
@@ -162,11 +170,11 @@ plotSmear(late,de.tags=rownames(dge)[as.logical(dtLate)],ylab="log FC_late - log
 pheatmap(cpm(dge,log=TRUE)[rownames(ttLate$table)[1:30],],labels_col = paste(hammer.eset$protocol,hammer.eset$time,sep="-"))
 ```
 
-##Interaction
+## Interaction
 
 To assess if the treatment effect changes over time, we will test the null hypothesis that the interaction term equals zero vs the alternative that the interaction term is different from zero.  
 
-This can be assessed by testing the null hypothesis 
+This can be assessed by testing the null hypothesis
 
 $$
 H_0: \log \text{FC}^\text{2 months}_\text{snl-c}-\log \text{FC}^\text{2 weeks}_\text{snl-c}=0 \rightarrow \beta_\text{snl,t2m}=0
@@ -189,8 +197,26 @@ plotSmear(inter,de.tags=rownames(dge)[as.logical(dtInter)],ylab="log FC_late - l
 pheatmap(cpm(dge,log=TRUE)[rownames(ttInter$table)[1:30],],labels_col = paste(hammer.eset$protocol,hammer.eset$time,sep="-"))
 ```
 
-##Remarks
+## Remarks
 
-- There are very many DE genes according to the SNL treatment at the early and late timepoint. Remember the issues with the design? 
+- There are very many DE genes according to the SNL treatment at the early and late timepoint.
 
-- There are very few interactions significant. Can you explain this? 
+- Issues with the design?
+
+- There are very few interactions significant. Can you explain this?
+
+# Assess p-values
+
+```{r}
+ttEarly$table <- ttEarly$table %>%
+  mutate(z = sign(logFC) * abs(qnorm(PValue/2)))
+
+ttEarly$table %>%
+  ggplot(aes(x=z)) +
+  geom_histogram(aes(y = ..density..), color = "black") +
+  stat_function(fun = dnorm,
+      args = list(
+    mean = 0,
+    sd=1)
+  )
+```
