@@ -353,14 +353,17 @@ This simulates data from the null and breaks the association between the predict
 
 Here, we have a block design so we will permute within block.
 We will perform a balanced permutation.
-We will select two cellines at random and we will permute the labels.
+We will select two cellines at random and we will permute the labels of the treatment.
 
 ```{r}
 designPerm <- design
 
 cellLine <- sample(0:3,2)
+cellLine
+
 for (i in cellLine)
-designPerm[i*2 + 1:2, 2] <- c(1,0)
+  designPerm[i*2 + 1:2, 2] <- c(1,0)
+designPerm
 
 
 fitPermSamp <- glmFit(dge, designPerm)
@@ -384,5 +387,48 @@ We observe that the null distribution is approximately matching with a standard 
 There is no shift and the standard deviation in no longer larger than 1.
 Here, the distribution seems to be a bit more narrow than the the theoretical distribution.  
 
+
+#### Repeat for other permutation:
+
+```{r}
+designPerm <- design
+
+cellLine <- c(0,2)
+cellLine
+
+for (i in cellLine)
+  designPerm[i*2 + 1:2, 2] <- c(1,0)
+designPerm
+
+fitPermSamp <- glmFit(dge, designPerm)
+lrtPermSamp <- glmLRT(fitPermSamp, coef = "treatmentDexamethasone")
+ttAllPermSamp <- topTags(lrtPermSamp, n = nrow(dge))
+
+ttAllPermSamp$table <- ttAllPermSamp$table %>%
+  mutate(z = sign(logFC) * abs(qnorm(PValue/2)))
+
+pPermSamp <- ttAllPermSamp$table %>%
+  ggplot(aes(x=z)) +
+  geom_histogram(aes(y = ..density..), color = "black") +
+  stat_function(fun = dnorm,
+  args = list(
+    mean = 0,
+    sd=1)
+  )
+pPermSamp
+pPermSamp + xlim(-4,4)
+```
+
+Both permutations show that there are no deviations from the theoretical null when we simulate under the null and break potential confounding but leave correlation between genes intact.
+
 So there seems to be another reason for deviations of the null, than failed mathematical assumptions and correlation between genes!
+
 Perhaps confounders that we do not account for?
+
+## Concluding remark
+
+This example also clearly shows that although permutation methods offer a simple and attractive way to deal with mathematically complicated hypothesis testing situations,  they often cannot remedy failures of the theoretical null.
+
+So the use of permutations to establish the null distribution should also be used with care in high throughput contexts. Indeed, depending on the permutation scheme that is used you might break correlations between genes, samples and/or potential confounding.  
+
+So even if you use a permutation approach in a high throughput context, e.g. a wilcoxon rank sum test or other permutation based tests, you still might need to check for deviations of the null!

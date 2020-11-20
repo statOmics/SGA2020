@@ -27,6 +27,16 @@ FastQ files with a small subset of the reads can be found on https://github.com/
 ## Read Meta Data
 
 ```{r}
+suppressPackageStartupMessages({
+  library(tximeta)
+  library(DESeq2)
+  library(org.Hs.eg.db)
+  library(SummarizedExperiment)
+  library(ggplot2)
+  library(tidyverse)
+  library(pheatmap)
+})
+
 target<-readRDS("airwayMetaData.rds")
 ```
 
@@ -57,8 +67,8 @@ Software such as *kallisto*
 provide quantifications (usually both as counts and as TPMs) for each
 *transcript*. These can then be summarized on the gene level by adding all
 values for transcripts from the same gene. A simple way to import results from
-these packages into R is provided by the `r Biocpkg("tximport")` and
-`r Biocpkg("tximeta")` packages. Here, *tximport* reads the quantifications into a
+these packages into R is provided by the `tximport` and
+`tximeta` packages. Here, *tximport* reads the quantifications into a
 list of matrices, and *tximeta* aggregates the information into a
 *SummarizedExperiment* object, and also automatically adds additional
 annotations for the features. Both packages can return quantifications on the
@@ -79,18 +89,9 @@ addition to the quantified abundances themselves. With the `addIds()` function,
 we can add additional annotation columns.
 
 ```{r}
-suppressPackageStartupMessages({
-  library(tximeta)
-  library(DESeq2)
-  library(org.Hs.eg.db)
-  library(SummarizedExperiment)
-  library(ggplot2)
-  library(tidyverse)
-  library(pheatmap)
-})
 
 ## List all quant.sf output files from Salmon
-salmonfiles <- paste0("./salmon/", target$Run, "/quant.sf")
+salmonfiles <- paste0("~/Downloads/airwayLecture/salmon/", target$Run, "/quant.sf")
 names(salmonfiles) <- target$Run
 stopifnot(all(file.exists(salmonfiles)))
 
@@ -182,7 +183,8 @@ lrt <- glmLRT(fit, coef = "treatmentDexamethasone")
 ttAll <- topTags(lrt, n = nrow(dge)) # all genes
 hist(ttAll$table$PValue)
 tt <- topTags(lrt, n = nrow(dge), p.value = 0.05) # genes with adj.p<0.05
-tt
+head(tt)
+nrow(tt)
 ```
 
 
