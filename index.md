@@ -138,5 +138,6 @@ A primer to R and Data visualisation  in R can be found in:
 5. Solutions
 
     - Airway Example: [GenomeIndex](assets/airwayGenomeIndex.html), [read mapping and count table](assets/airwayMappingCountTableCorr.html), [DE analysis](assets/airway.html)
+    - Hammer Example: [edgeR](assets/hammer.html), [edgeQL](assets/hammer_quasi.html), [DESeq2](assets/hammer_DESEQ2.html)
 
 ##### [Instructors](pages/instructors.md)
