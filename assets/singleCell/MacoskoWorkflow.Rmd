@@ -1,0 +1,205 @@
+---
+title: 'scRNA-seq workflow: Macosko et al.'
+author: "Koen Van den Berge"
+date: "11/16/2020"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+# Import data
+
+The `scRNAseq` package provides convenient access to several datasets. See the [package Bioconductor page](http://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html) for more information.
+
+```{r}
+# install BiocManager package if not installed yet.
+# BiocManager is the package installer for Bioconductor software.
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+# install scRNAseq package if not yet installed.
+if(!"scRNAseq" %in% installed.packages()[,1]) BiocManager::install("scRNAseq")
+
+# Code below might ask you to create an ExperimentHub directory. 
+# Type 'yes' and hit Enter, to allow this.
+suppressPackageStartupMessages(library(scRNAseq))
+sce <- MacoskoRetinaData()
+```
+
+# A `SingleCellExperiment` object
+
+
+```{r}
+sce
+```
+
+## Accessing data from a `SingleCellExperiment` object
+
+Please see [Figure 4.1 in OSCA](http://bioconductor.org/books/release/OSCA/data-infrastructure.html) for an overview of a `SingleCellExperiment` object.
+
+```{r}
+# Data: assays
+assays(sce)
+assays(sce)$counts[1:5, 1:5]
+
+# Feature metadata: rowData
+rowData(sce) # empty for now
+
+# Cell metadata: colData
+colData(sce)
+
+# Reduced dimensions: reducedDims
+reducedDims(sce) # empty for now
+```
+
+## Creating a new `SingleCellExperiment` object
+
+```{r}
+sceNew <- SingleCellExperiment(assays = list(counts = assays(sce)$counts))
+sceNew
+
+rm(sceNew)
+```
+
+## Storing (meta)data in a `SingleCellExperiment` object
+
+```{r}
+fakeGeneNames <- paste0("gene", 1:nrow(sce))
+rowData(sce)$fakeName <- fakeGeneNames
+head(rowData(sce))
+# Remove again by setting to NULL
+rowData(sce)$fakeName <- NULL
+
+assays(sce)$logCounts <- log1p(assays(sce)$counts)
+assays(sce)
+assays(sce)$logCounts[1:5, 1:5]
+assays(sce)$logCounts <- NULL
+```
+
+# Filtering non-informative genes
+
+```{r}
+keep <- rowSums(assays(sce)$counts > 0) > 10
+table(keep)
+
+sce <- sce[keep,]
+```
+
+
+
+# Quality control
+
+## Calculate QC variables
+
+```{r}
+library(scater)
+is.mito <- grepl("^MT-", rownames(sce))
+sum(is.mito) # 31 mitochondrial genes
+sce <- addPerCellQC(sce, subsets=list(Mito=is.mito))
+# the QC variables have now been added to the colData of our SCE object.
+colData(sce)
+```
+
+## EDA
+
+High-quality cells should have many features expressed, and a low contribution of mitochondrial genes. Here, we see that several cells have a very low number of expressed genes, and where most of the molecules are derived from mitochondrial genes. This indicates likely damaged cells, presumably because of loss of cytoplasmic RNA from perforated cells, so we'd want to remove these for the downstream analysis.
+
+```{r}
+# Number of genes vs library size
+plotColData(sce, x = "sum", y="detected", colour_by="cluster") 
+
+# Mitochondrial genes
+plotColData(sce, x = "detected", y="subsets_Mito_percent")
+```
+
+## QC using adaptive thresholds
+
+```{r}
+# check outliers using adaptive threshold
+outlierResults <- quickPerCellQC(sce,
+                                 percent_subsets = c("subsets_Mito_percent"))
+# cells to remove and why
+colSums(as.matrix(outlierResults))
+# add to metadata
+colData(sce)$discard <- outlierResults$discard
+
+# visualize cells to be removed
+plotColData(sce, x = "detected", y="subsets_Mito_percent", colour_by = "discard")
+
+# remove cells
+sce <- sce[, !colData(sce)$discard]
+```
+
+
+# Normalization
+
+For normalization, the size factors $s_i$ computed here are simply scaled library sizes:
+\[ N_i = \sum_g Y_{gi} \]
+\[ s_i = N_i / \bar{N}_i \]
+
+```{r}
+sce <- logNormCounts(sce)
+
+# note we also returned log counts: see the additional logcounts assay.
+sce
+
+# you can extract size factors using
+sf <- librarySizeFactors(sce)
+mean(sf) # equal to 1 due to scaling.
+plot(x= log(colSums(assays(sce)$counts)), 
+     y=sf)
+```
+
+# Feature selection
+
+```{r}
+library(scran)
+dec <- modelGeneVar(sce)
+fitRetina <- metadata(dec)
+plot(fitRetina$mean, fitRetina$var, 
+     xlab="Mean of log-expression",
+    ylab="Variance of log-expression")
+curve(fitRetina$trend(x), col="dodgerblue", add=TRUE, lwd=2)
+
+# get 10% highly variable genes
+hvg <- getTopHVGs(dec, prop=0.1)
+head(hvg)
+
+# plot these 
+plot(fitRetina$mean, fitRetina$var, 
+     col = c("orange", "darkseagreen3")[(names(fitRetina$mean) %in% hvg)+1],
+     xlab="Mean of log-expression",
+    ylab="Variance of log-expression")
+curve(fitRetina$trend(x), col="dodgerblue", add=TRUE, lwd=2)
+legend("topleft", 
+       legend = c("Selected", "Not selected"), 
+       col = c("darkseagreen3", "orange"),
+       pch = 16,
+       bty='n')
+```
+
+# Dimensionality reduction
+
+Note that, below, we color the cells using the known, true cell type label as defined in the metadata. In reality, we don't know this yet at this stage.
+
+```{r}
+set.seed(1234)
+sce <- runPCA(sce, ncomponents=30, subset_row=hvg)
+plotPCA(sce)
+
+sce <- runUMAP(sce, dimred = 'PCA', external_neighbors=TRUE)
+plotUMAP(sce)
+```
+
+# Clustering
+
+```{r}
+# Build a shared nearest-neighbor graph from PCA space
+g <- buildSNNGraph(sce, use.dimred = 'PCA')
+# Louvain clustering on the SNN graph, and add to sce
+colData(sce)$label <- factor(igraph::cluster_louvain(g)$membership)
+
+# Visualization.
+plotUMAP(sce, colour_by="label")
+```
