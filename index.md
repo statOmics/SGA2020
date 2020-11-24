@@ -151,6 +151,7 @@ A primer to R and Data visualisation  in R can be found in:
     - Main resources: [Orchestrating Single-Cell Analysis with Bioconductor](http://bioconductor.org/books/release/OSCA/) and [corresponding paper](https://www.nature.com/articles/s41592-019-0654-x).
     - A reproducible workflow for the Drop-seq dataset from [Macosko *et al.* (2015)](https://www.cell.com/fulltext/S0092-8674(15)00549-8): [HTML file](assets/singleCell/MacoskoWorkflow.html), [RMarkdown file](assets/singleCell/MacoskoWorkflow.Rmd).
     - Working with scRNA-seq data: Assess the effect of feature selection on (i) dimensionality reduction, (ii) clustering using the dataset from Tasic *et al.* (2016). You can download the data from the [Gene Expression Omnibus, accession number GSE71585](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE71585).
+    - [Understanding UMAP](https://pair-code.github.io/understanding-umap/).
 
 
 ##### [Instructors](pages/instructors.md)
