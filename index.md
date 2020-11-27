@@ -157,6 +157,10 @@ A primer to R and Data visualisation  in R can be found in:
 
     - Trajectory-based differential expression analysis: [paper](https://www.nature.com/articles/s41467-020-14766-3), [slides](https://docs.google.com/presentation/d/1V2OFnTM6srut8OyDa50Ea86uku--aL-ZJuRwhsD5AJo/edit?usp=sharing), [workshop](https://kstreet13.github.io/bioc2020trajectories/articles/workshopTrajectories.html).
     - Differential transcript usage analysis for scRNA-seq data: presentation of unpublished work.
+    - [Local FDR paper](assets/singleCell/euclid.ss.1215441276.pdf)
 
+**Projects**
+
+- [Project introduction slides](assets/singleCell/projects.pptx)
 
 ##### [Instructors](pages/instructors.md)
