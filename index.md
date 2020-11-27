@@ -152,6 +152,11 @@ A primer to R and Data visualisation  in R can be found in:
     - A reproducible workflow for the Drop-seq dataset from [Macosko *et al.* (2015)](https://www.cell.com/fulltext/S0092-8674(15)00549-8): [HTML file](assets/singleCell/MacoskoWorkflow.html), [RMarkdown file](assets/singleCell/MacoskoWorkflow.Rmd).
     - Working with scRNA-seq data: Assess the effect of feature selection on (i) dimensionality reduction, (ii) clustering using the dataset from Tasic *et al.* (2016). You can download the data from the [Gene Expression Omnibus, accession number GSE71585](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE71585).
     - [Understanding UMAP](https://pair-code.github.io/understanding-umap/).
+    
+2. Selected topics in single-cell RNA-seq analysis.
+
+    - Trajectory-based differential expression analysis: [paper](https://www.nature.com/articles/s41467-020-14766-3), [slides](https://docs.google.com/presentation/d/1V2OFnTM6srut8OyDa50Ea86uku--aL-ZJuRwhsD5AJo/edit?usp=sharing), [workshop](https://kstreet13.github.io/bioc2020trajectories/articles/workshopTrajectories.html).
+    - Differential transcript usage analysis for scRNA-seq data: presentation of unpublished work.
 
 
 ##### [Instructors](pages/instructors.md)
