@@ -139,12 +139,12 @@ A primer to R and Data visualisation  in R can be found in:
 
     - Airway Example: [GenomeIndex](assets/airwayGenomeIndex.html), [read mapping and count table](assets/airwayMappingCountTableCorr.html), [DE analysis](assets/airway.html)
     - Hammer Example: [edgeR](assets/hammer.html), [edgeQL](assets/hammer_quasi.html), [DESeq2](assets/hammer_DESEQ2.html)
-    
+
 ---
 
 **Part III: Single-cell RNA-sequencing**
 
-1. Single-cell analysis: Concepts and a general workflow for single-cell RNA-sequencing (scRNA-seq) datasets. 
+1. Single-cell analysis: Concepts and a general workflow for single-cell RNA-sequencing (scRNA-seq) datasets.
 
     - Slides: [Introduction to general concepts, and discussion of analysis pipeline](https://docs.google.com/presentation/d/1aZJz3S3pBRcGh9Zy2Bi6HXw2Rw-5tb0XNdyeesf9YEY/edit?usp=sharing).
     - An intuitive primer on why offsets are used for normalization, as opposed to simple count scaling: [HTML file](assets/singleCell/scalingNormalization.html), [RMarkdown file](assets/singleCell/scalingNormalization.Rmd).
@@ -152,7 +152,7 @@ A primer to R and Data visualisation  in R can be found in:
     - A reproducible workflow for the Drop-seq dataset from [Macosko *et al.* (2015)](https://www.cell.com/fulltext/S0092-8674(15)00549-8): [HTML file](assets/singleCell/MacoskoWorkflow.html), [RMarkdown file](assets/singleCell/MacoskoWorkflow.Rmd).
     - Working with scRNA-seq data: Assess the effect of feature selection on (i) dimensionality reduction, (ii) clustering using the dataset from Tasic *et al.* (2016). You can download the data from the [Gene Expression Omnibus, accession number GSE71585](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE71585).
     - [Understanding UMAP](https://pair-code.github.io/understanding-umap/).
-    
+
 2. Selected topics in single-cell RNA-seq analysis.
 
     - Trajectory-based differential expression analysis: [paper](https://www.nature.com/articles/s41467-020-14766-3), [slides](https://docs.google.com/presentation/d/1V2OFnTM6srut8OyDa50Ea86uku--aL-ZJuRwhsD5AJo/edit?usp=sharing), [workshop](https://kstreet13.github.io/bioc2020trajectories/articles/workshopTrajectories.html).
@@ -162,5 +162,6 @@ A primer to R and Data visualisation  in R can be found in:
 **Projects**
 
 - [Project introduction slides](assets/singleCell/projects.pptx)
+- [CiteSeq Project Assignment](assets/singleCell/CITESeq_assignment.pdf)
 
 ##### [Instructors](pages/instructors.md)
