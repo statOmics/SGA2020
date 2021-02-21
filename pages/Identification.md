@@ -17,7 +17,7 @@ We first introduce some notation. With x we denote the PSM score and we assume t
 
 $$ f(x)=\pi_0 f_0 (x)+(1-\pi_0 ) f_1 (x), $$
 
-with \\( f(x) \\) the target PSM score distribution, \\( f_0(x) \\) the mixture component corresponding to incorrect PSMs, \\( f_0(x) \\)  the mixture component corresponding to the correct PSMs and \\( \pi_0 \\) the fraction of incorrect PSMs.
+with \\( f(x) \\) the target PSM score distribution, \\( f_0(x) \\) the mixture component corresponding to incorrect PSMs, \\( f_1(x) \\)  the mixture component corresponding to the correct PSMs and \\( \pi_0 \\) the fraction of incorrect PSMs.
 Based on the mixture distribution we can calculate the posterior probability that a PSM with score x is a bad match:
 
 $$ P[\text{Bad hit} \vert \text{score }x]=\frac{\pi_0 f_0 (x)}{f(x)}, $$
